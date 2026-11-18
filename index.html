@@ -335,7 +335,7 @@ body.rzing,body.rzing *{user-select:none}body.rzx,body.rzx *{cursor:col-resize!i
   <button class="ed" id="toolsBtn" title="Show or hide the Photopea-style toolbox">Tools</button>
   <button class="ed camponly" id="exportBtn" title="Export images (Ctrl+Alt+Shift+W)">Export</button>
   <button class="ed" id="addImgBtn" title="Add image (or drag a file onto the canvas, or Ctrl+V)">+ Image</button>
-  <input type="file" id="fileIn" accept="image/*" multiple hidden>
+  <input type="file" id="fileIn" accept="image/*,.psd" multiple hidden><input type="file" id="psdNewIn" accept=".psd" hidden>
   <input type="file" id="replIn" accept="image/*" hidden>
   <button class="ed" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
   <button class="ed" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
@@ -345,7 +345,7 @@ body.rzing,body.rzing *{user-select:none}body.rzx,body.rzx *{cursor:col-resize!i
 <div id="home">
   <div class="hhead"><h2>Campaigns</h2><button id="newCampBtn" class="pri">+ New campaign</button></div>
   <div id="campGrid" class="cards"></div>
-  <div class="hhead"><h2>Layouts</h2><button id="newLayBtn">+ New layout</button></div>
+  <div class="hhead"><h2>Layouts</h2><button id="psdLayBtn" title="Make a layout from a Photoshop file, keeping its layers">From PSD…</button><button id="newLayBtn">+ New layout</button></div>
   <div id="layGrid" class="cards"></div>
   <p class="muted" style="line-height:1.6">Everything is saved automatically in this browser. Layouts are your templates; a campaign copies a layout and adds your products (SKUs).</p>
 </div>
@@ -1034,7 +1034,7 @@ function onKey(e){if(!/^(Digit|Numpad)\d$/.test(e.code))opKey=null;
   if(k==='Escape'&&polySel)return go(polyCancel);
   if(k==='Enter'&&cropRect)return go(applyCrop);
   if(k==='Enter'&&tMode)return go(confirmFT);
-  if(k==='Escape'){if(cropRect)return go(cancelCrop);if(tMode)return go(cancelFT);return}
+  if(k==='Escape'){if(cropRect)return go(cancelCrop);if(tMode)return go(cancelFT);if(pixSel)return go(clearPixSel);if(sel.length)return go(()=>{sel=[];renderSel()});return}
   if(toolsOn&&!c&&!a){const t=TOOL_KEYS[code];if(t)return go(()=>pickGroup(t,s));
     if(code==='KeyX')return go(()=>{[fg,bg]=[bg,fg];renderSwatches()});if(code==='KeyD')return go(()=>{fg='#000000';bg='#ffffff';renderSwatches()});
     if(code==='BracketLeft'||code==='BracketRight')return go(()=>brushKey(code==='BracketRight',s));
@@ -1276,6 +1276,8 @@ function newCatFolder(){ask('New category folder','Products you drag into this f
 /* ---------- adding your own images ---------- */
 function readImage(file){return new Promise((res,rej)=>{if(!file||!/^image\//.test(file.type))return rej('not image');const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const key='up_'+uid();IMG[key]=im;assets[key]=r.result;assetNames[key]=(file.name||'Pasted image').replace(/\.[^.]+$/,'');res(key)};im.onerror=()=>rej('bad');im.src=r.result};r.readAsDataURL(file)})}
 async function addImages(files,pt){
+  const psds=[...files].filter(f=>/\.psd$/i.test(f.name)||f.type==='image/vnd.adobe.photoshop');
+  if(psds.length){for(const f of psds)await openPsd(f,false);files=[...files].filter(f=>!psds.includes(f));if(!files.length)return}
   const list=[...files].filter(f=>/^image\//.test(f.type));
   if(!list.length)return toast('That file is not an image. Use PNG, JPG, WebP or SVG.');
   const keys=[];for(const f of list){try{keys.push(await readImage(f))}catch(e){}}
@@ -1331,6 +1333,93 @@ async function aiRemoveBg(){
   finally{aiBusy=false;renderProps();renderCtx()}
 }
 
+
+/* ---------- open PSD files (like Photopea): real layers, folders, text, shapes, effects ---------- */
+const AGPSD='https://cdn.jsdelivr.net/npm/ag-psd@34.2.1/dist/bundle.js';
+const psdNorm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const PSD_WEIGHTS=[['thin','100'],['hairline','100'],['extralight','200'],['ultralight','200'],['light','300'],['book','400'],['regular','400'],['roman','400'],['normal','400'],['medium','500'],['semibold','600'],['demibold','600'],['demi','600'],['extrabold','800'],['ultrabold','800'],['heavy','800'],['black','900'],['bold','700']];
+function psdFont(ps,fauxBold){ps=String(ps||'Inter');const fonts=allFonts();
+  const exact=fonts.find(f=>psdNorm(f)===psdNorm(ps));if(exact)return{family:exact,weight:fauxBold?'700':'400',italic:false,found:true};
+  let [fam,sty='']=ps.split('-');sty=sty.toLowerCase();const italic=/italic|oblique/.test(sty);let weight='400';
+  for(const [k,v] of PSD_WEIGHTS)if(sty.replace(/italic|oblique/g,'').includes(k)){weight=v;break}if(fauxBold)weight='700';
+  const spaced=fam.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/MT$|PS$/,'').trim();
+  const hit=fonts.find(f=>psdNorm(f)===psdNorm(fam)||psdNorm(f)===psdNorm(spaced));
+  return{family:hit||spaced,weight,italic,found:!!hit}}
+const psdHex=c=>{if(!c)return'#000000';if('fr' in c)return toHex([c.fr*255,c.fg*255,c.fb*255]);if('r' in c)return toHex([c.r,c.g,c.b]);if('k' in c){const k=1-c.k/100;return toHex([255*(1-c.c/100)*k,255*(1-c.m/100)*k,255*(1-c.y/100)*k])}return'#000000'};
+const psdVal=u=>u==null?0:typeof u==='number'?u:(u.value||0);
+async function readPsdFile(file){if(!window.agPsd)await loadScript(AGPSD);
+  return agPsd.readPsd(await file.arrayBuffer(),{skipCompositeImageData:true,skipThumbnail:true,useImageData:false})}
+/* turn PSD layers into EM Tool layers; k scales PSD pixels to the 1200 canvas, ox/oy centre it */
+function psdToLayers(psd,k,ox,oy,notes){
+  const P=v=>R(v*k),X=v=>R(v*k+ox),Y=v=>R(v*k+oy);
+  function pixels(l){let c=l.canvas;if(!c||!c.width||!c.height)return null;
+    if(l.mask&&l.mask.canvas&&!l.mask.disabled){const m=l.mask,out=blankSize(c.width,c.height),ox2=out.getContext('2d');ox2.drawImage(c,0,0);
+      const md=blankSize(c.width,c.height),mx=md.getContext('2d');const dv=(m.defaultColor||0);mx.fillStyle=`rgb(${dv},${dv},${dv})`;mx.fillRect(0,0,c.width,c.height);mx.drawImage(m.canvas,(m.left||0)-(l.left||0),(m.top||0)-(l.top||0));
+      const a=ox2.getImageData(0,0,c.width,c.height),b=mx.getImageData(0,0,c.width,c.height);for(let i=3;i<a.data.length;i+=4)a.data[i]=a.data[i]*b.data[i-3]/255;ox2.putImageData(a,0,0);c=out}
+    return c}
+  function fxOf(l,d){const e=l.effects;if(!e||e.disabled)return;const fx={};
+    const sh=(e.dropShadow||[]).find(s=>s.enabled!==false);if(sh){const a=(sh.useGlobalLight?120:(sh.angle==null?120:sh.angle))*Math.PI/180,dist=psdVal(sh.distance)*k;
+      fx.shadow={on:true,color:psdHex(sh.color),blur:R(psdVal(sh.size)*k),ox:R(-Math.cos(a)*dist),oy:R(Math.sin(a)*dist),op:sh.opacity==null?.75:sh.opacity}}
+    const st=(e.stroke||[]).find(s=>s.enabled!==false&&(s.fillType||'color')==='color');if(st&&['text','rect','ellipse'].includes(d.type))fx.stroke={on:true,color:psdHex(st.color),width:Math.max(1,R(psdVal(st.size)*k))};
+    const so=(e.solidFill||[]).find(s=>s.enabled!==false);if(so&&['text','rect','ellipse'].includes(d.type))d.fill=psdHex(so.color);
+    const other=['outerGlow','innerGlow','innerShadow','bevel','satin','gradientOverlay','patternOverlay'].filter(n=>(e[n]||[]).length?(Array.isArray(e[n])?e[n]:[e[n]]).some(x=>x.enabled!==false):false);
+    if(other.length)notes.fx.add(l.name);if(st&&!fx.stroke)notes.fx.add(l.name);if(so&&!['text','rect','ellipse'].includes(d.type))notes.fx.add(l.name);
+    if(Object.keys(fx).length)d.fx=fx}
+  function textOf(l){const t=l.text;if(!t||!t.text||t.warp&&t.warp.style&&t.warp.style!=='none')return null;
+    const runs=(t.styleRuns||[]).slice().sort((a,b)=>b.length-a.length),st={...(t.style||{}),...((runs[0]||{}).style||{})};
+    const tr=t.transform||[1,0,0,1,0,0],sc=Math.hypot(tr[2],tr[3])||1,fs=(st.fontSize||24)*sc;
+    const f=psdFont(st.font&&st.font.name,st.fauxBold);if(!f.found)notes.fonts.add(f.family);
+    const just=(t.paragraphStyle||{}).justification||'left',align=/center/.test(just)?'center':/right/.test(just)?'right':'left';
+    const lines=t.text.replace(/\r/g,'\n').split('\n').length,lh=st.autoLeading===false&&st.leading?Math.max(.8,Math.min(2.5,st.leading*sc/fs)):1.2;
+    const ls=st.tracking?st.tracking/1000*fs:0;
+    let x0=l.left||0,x1=l.right||0,y0=l.top||0,y1=l.bottom||0;
+    if(t.shapeType==='box'&&t.boxBounds){const b=t.boxBounds;x0=tr[4]+b[0]*sc;x1=tr[4]+b[2]*sc;y0=tr[5]+b[1]*sc;y1=tr[5]+b[3]*sc}
+    const inkW=Math.max(4,x1-x0),bw=t.shapeType==='box'?inkW:inkW*1.18+fs*.6,bh=Math.max(y1-y0,lines*fs*lh)+fs*.3,cy=(y0+y1)/2;
+    const bx=t.shapeType==='box'?x0:align==='center'?(x0+x1)/2-bw/2:align==='right'?x1-bw+fs*.1:x0-fs*.1;
+    const d={id:uid(),name:l.name||t.text.slice(0,24),type:'text',x:X(bx),y:Y(cy-bh/2),width:P(bw),height:P(bh),text:t.text.replace(/\r/g,'\n'),
+      fontFamily:f.family,fontStyle:f.weight,italic:f.italic,fontSize:P(fs),fill:psdHex(st.fillColor),align,lineHeight:+lh.toFixed(2),...(ls?{letterSpacing:P(ls)}:{})};
+    if(st.fontCaps===1||st.fontCaps==='allCaps')d.caps=true;
+    if(Math.abs(tr[1])>1e-3)d.rotation=R(Math.atan2(tr[1],tr[0])*180/Math.PI);
+    return d}
+  function shapeOf(l){const vo=l.vectorOrigination,vf=l.vectorFill;if(!vo||!vo.keyDescriptorList||vo.keyDescriptorList.length!==1||!vf||vf.type!=='color'||l.mask&&l.mask.canvas)return null;
+    const kd=vo.keyDescriptorList[0],t=kd.keyOriginType;if(![1,2,5].includes(t))return null;const bb=kd.keyOriginShapeBoundingBox;if(!bb)return null;
+    const L=psdVal(bb.left),T=psdVal(bb.top),Rr=psdVal(bb.right),B=psdVal(bb.bottom);if(Rr-L<1||B-T<1)return null;
+    const d={id:uid(),name:l.name||'Shape',type:t===5?'ellipse':'rect',x:X(L),y:Y(T),width:P(Rr-L),height:P(B-T),fill:psdHex(vf.color)};
+    if(t===2&&kd.keyOriginRRectRadii){const r=kd.keyOriginRRectRadii,v=[r.topLeft,r.topRight,r.bottomRight,r.bottomLeft].map(q=>P(psdVal(q)));d.cornerRadius=v.every(q=>q===v[0])?v[0]:v}else if(t===1)d.cornerRadius=0;
+    const vs=l.vectorStroke;if(vs&&vs.strokeEnabled!==false&&vs.content&&vs.content.type==='color'&&psdVal(vs.lineWidth)>0){d.stroke=psdHex(vs.content.color);d.strokeWidth=Math.max(1,P(psdVal(vs.lineWidth)))}
+    if(vs&&vs.fillEnabled===false)d.fill='rgba(0,0,0,0)';
+    return d}
+  function imageOf(l,clipBase){let c=pixels(l);if(!c)return null;
+    if(clipBase&&clipBase.c){const out=blankSize(c.width,c.height),o=out.getContext('2d');o.drawImage(c,0,0);o.globalCompositeOperation='destination-in';o.drawImage(clipBase.c,(clipBase.left)-(l.left||0),(clipBase.top)-(l.top||0));c=out}
+    const key='px_'+uid();IMG[key]=c;assetNames[key]=l.name||'Layer';
+    return{id:uid(),name:l.name||'Layer',type:'image',img:key,x:X(l.left||0),y:Y(l.top||0),width:P(c.width),height:P(c.height)}}
+  function conv(list){const out=[];let clipBase=null;
+    (list||[]).forEach(l=>{let d=null;
+      if(l.adjustment){notes.adj.add(l.name);return}
+      if(l.children){d={id:uid(),name:l.name||'Folder',type:'group',x:0,y:0,children:conv(l.children)};clipBase=null}
+      else{if(l.clipping&&clipBase){d=imageOf(l,clipBase)}
+        else{d=textOf(l)||shapeOf(l)||imageOf(l,null);clipBase=l.canvas?{c:pixels(l),left:l.left||0,top:l.top||0}:null}
+        if(!d)return}
+      if(l.hidden)d.visible=false;
+      const op=(l.opacity==null?1:l.opacity)*(l.fillOpacity==null?1:l.fillOpacity);if(op<.999)d.opacity=+op.toFixed(3);
+      if(l.blendMode&&!['normal','pass through'].includes(l.blendMode))notes.blend.add(l.name);
+      fxOf(l,d);out.push(d)});
+    return out}
+  return conv(psd.children)}
+async function openPsd(file,asNewLayout){
+  toast('Opening '+file.name+'…');
+  let psd;try{psd=await readPsdFile(file)}catch(e){console.warn(e);return toast('Couldn’t read that PSD. Check you are online the first time (the PSD reader downloads once, about 1 MB).')}
+  const k=Math.min(W/psd.width,H/psd.height),ox=(W-psd.width*k)/2,oy=(H-psd.height*k)/2,notes={fonts:new Set(),fx:new Set(),adj:new Set(),blend:new Set()};
+  const layers=psdToLayers(psd,k,ox,oy,notes),name=file.name.replace(/\.psd$/i,'');
+  if(asNewLayout){const l={id:'lay_'+uid(),name,base:layers,sampleName:'Product name here',sampleImg:'washer',updatedAt:now()};store.layouts.push(l);openEditor('layout',l.id);persistNow(false)}
+  else{snapshot();const g={id:uid(),name,type:'group',x:0,y:0,children:layers};if(applyAll)base.push(g);else skus[cur].extras.push(g);sel=[g.id];render()}
+  const msg=[];let count=0;(function c(a){a.forEach(d=>{count++;if(d.children)c(d.children)})})(layers);
+  msg.push(`Opened ${name}: ${count} layers.`);if(asNewLayout)msg.push('Next: click the product photo and the product name, and set “This layer is” in Properties so they change per product.');
+  if(notes.fonts.size)msg.push(`Upload these fonts in the text bar to see them right: ${[...notes.fonts].slice(0,4).join(', ')}${notes.fonts.size>4?'…':''}.`);
+  if(notes.fx.size)msg.push(`Some effects (glow, bevel, gradient overlay) were left off ${notes.fx.size} layer${notes.fx.size>1?'s':''}.`);
+  if(notes.adj.size)msg.push(`${notes.adj.size} adjustment layer${notes.adj.size>1?'s were':' was'} skipped.`);
+  if(notes.blend.size)msg.push(`Blend modes show as Normal.`);
+  toast(msg.join(' '));setTimeout(()=>{const t=$('#toast');if(t)clearTimeout(toastT),toastT=setTimeout(()=>t.classList.remove('show'),9000)},0)}
 
 /* ---------- Split into layers (like Canva's Magic Grab): flat image -> text + product + background ---------- */
 const TESS_VER='5.1.1',TESS={js:`https://cdn.jsdelivr.net/npm/tesseract.js@${TESS_VER}/dist/tesseract.min.js`,worker:`https://cdn.jsdelivr.net/npm/tesseract.js@${TESS_VER}/dist/worker.min.js`,core:`https://cdn.jsdelivr.net/npm/tesseract.js-core@${TESS_VER}`,lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int'};
@@ -1486,7 +1575,8 @@ function segmentPieces(P,Wp,Hp){
       // pieces sitting on this one (a truck on a white box, a logo on a dark header)
       px.forEach(j=>claimed[j]=0);
       const inside=(X,Y)=>{const x=X-x0,y=Y-y0;return own[y*w+x]||inHull(x,y)};
-      const kids=comps({x0,y0,x1,y1},[dom,...fills],inside);
+      const kids=comps({x0,y0,x1,y1},[dom,...fills],inside).filter(k=>{let a=Wp,b=Hp,c=0,e=0;k.forEach(j=>{const x=j%Wp,y=(j/Wp)|0;if(x<a)a=x;if(x>c)c=x;if(y<b)b=y;if(y>e)e=y});
+        return !((c-a+1)>=w*.88&&(e-b+1)>=h*.88&&k.length<px.length*.35)});
       kidMask=new Uint8Array(w*h);
       kids.forEach(k=>{k.forEach(j=>kidMask[(((j/Wp)|0)-y0)*w+(j%Wp)-x0]=1)});
       px.forEach(j=>{if(!kidMask[(((j/Wp)|0)-y0)*w+(j%Wp)-x0])claimed[j]=1});
@@ -1509,6 +1599,16 @@ function segmentPieces(P,Wp,Hp){
   const photos=out.filter(r=>!r.flat&&!r.thin&&r.depth===0).sort((a,b)=>b.area-a.area);
   out.forEach(r=>r.name=r===photos[0]&&r.area>Wp*Hp*.02?'Product':r.thin?'Line':r.flat?(r.area>Wp*Hp*.01?'Shape':'Icon'):'Graphic');
   return{bg:bg.col,pieces:out}}
+/* a character Tesseract skipped, sitting right beside a line of text */
+function findOrphanGlyph(P,Wp,Hp,ln,side){const h=ln.h,bg=ln.bg,y0=Math.max(0,Math.round(ln.bb.y0-h*.1)),y1=Math.min(Hp-1,Math.round(ln.bb.y1+h*.1));
+  const reach=Math.round(h*1.6),xs=side<0?[...Array(reach)].map((_,k)=>ln.bb.x0-2-k):[...Array(reach)].map((_,k)=>ln.bb.x1+2+k);
+  const inkCol=x=>{if(x<0||x>=Wp)return null;let a=-1,b=-1;for(let y=y0;y<=y1;y++){const i=(y*Wp+x)*4;if(colDist([P[i],P[i+1],P[i+2]],bg)>70){if(a<0)a=y;b=y}}return a<0?null:[a,b]};
+  let start=-1,end=-1,gy0=Hp,gy1=0,gap=0;
+  for(let k=0;k<xs.length;k++){const c=inkCol(xs[k]);if(c){if(start<0)start=k;end=k;gy0=Math.min(gy0,c[0]);gy1=Math.max(gy1,c[1]);gap=0}else if(start>=0){if(++gap>Math.max(2,h*.15))break}else if(k>h*1.1)return null}
+  if(start<0)return null;const wpx=end-start+1,hpx=gy1-gy0+1;if(hpx<h*.45||hpx>h*1.4||wpx<2||wpx>h*1.3)return null;
+  // stop if the ink keeps going (it's part of a bigger shape, not a character)
+  const beyond=inkCol(xs[Math.min(xs.length-1,end+Math.max(3,Math.round(h*.3)))]);if(beyond&&end+3<xs.length&&gap===0)return null;
+  const xa=Math.min(xs[start],xs[end]),xb=Math.max(xs[start],xs[end]);return{x0:xa,y0:gy0,x1:xb,y1:gy1}}
 /* fill masked pixels from their surroundings (push-pull pyramid) */
 function fillMasked(img,mask,Wp,Hp){
   let w=Wp,h=Hp,C=new Float32Array(w*h*3),Wt=new Float32Array(w*h);
@@ -1560,8 +1660,17 @@ async function splitLayers(){
     for(let v=0;v<vars.length;v++){splitLog=m=>{if(m.status==='recognizing text')toast(`Reading the text… ${Math.round((v+m.progress)/vars.length*100)}%`)};
       await wk.setParameters({tessedit_pageseg_mode:vars[v].psm});const {data}=await wk.recognize(vars[v].c,{},{blocks:true,text:true});collectWords(data,words)}
     const dw=dedupeWords(words);    // a lone character, or two shaky letters on their own, is usually part of an icon, not text
-    const items=buildItems(dw,P,Wp,Hp).filter(it=>{const ws=it.lines.flatMap(l=>l.ws),an=ws.map(w=>w.text).join('').replace(/[^A-Za-z0-9]/g,'').length;
+    const items0=buildItems(dw,P,Wp,Hp).filter(it=>{const ws=it.lines.flatMap(l=>l.ws),an=ws.map(w=>w.text).join('').replace(/[^A-Za-z0-9]/g,'').length;
       if(an>=3)return true;if(an<=1)return false;return ws.every(w=>w.conf>=90)});
+    await wk.setParameters({tessedit_pageseg_mode:'10'});
+    for(const it of items0)for(const ln of it.lines)for(const side of [-1,1]){const g=findOrphanGlyph(P,Wp,Hp,ln,side);if(!g)continue;
+      const cw=g.x1-g.x0+1,ch=g.y1-g.y0+1,pad=Math.round(ln.h*.4),cc=blankSize((cw+pad*2)*2,(ch+pad*2)*2),ccx=cc.getContext('2d');ccx.fillStyle=toHex(ln.bg);ccx.fillRect(0,0,cc.width,cc.height);
+      ccx.imageSmoothingQuality='high';ccx.drawImage(C,g.x0,g.y0,cw,ch,pad*2,pad*2,cw*2,ch*2);
+      try{const {data}=await wk.recognize(cc,{},{text:true,blocks:true});const t=(data.text||'').trim().replace(/\s+/g,'');
+        if(t&&t.length<=2&&/^[A-Za-z0-9+%#&*-]+$/.test(t)&&data.confidence>=55){const w={text:t,conf:data.confidence,bb:{x0:g.x0,y0:g.y0,x1:g.x1,y1:g.y1}};
+          if(side<0)ln.ws.unshift(w);else ln.ws.push(w);ln.text=ln.ws.map(q=>q.text).join(' ');ln.bb={x0:Math.min(ln.bb.x0,g.x0),y0:ln.bb.y0,x1:Math.max(ln.bb.x1,g.x1),y1:ln.bb.y1};
+          it.bb={x0:Math.min(it.bb.x0,g.x0),y0:it.bb.y0,x1:Math.max(it.bb.x1,g.x1),y1:it.bb.y1}}}catch(_){}}
+    const items=items0;
     // 3) text colour, size, weight and a mask of the letters
     const tmask=new Uint8Array(Wp*Hp),k=d.width/info.im.width()*info.im.width()/Wp,ky=d.height/Hp,kx=d.width/Wp,texts=[];
     const flat=[];
@@ -1579,7 +1688,10 @@ async function splitLayers(){
       const lineH=median(it.lines.map(l=>l.h)),ratio=ink/Math.max(1,area);
       const weight=ratio>.36?'800':ratio>.27?'700':ratio>.2?'600':'500';
       let fs=lineH*1.3;const widest=it.lines.reduce((a,l)=>l.bb.x1-l.bb.x0>a.bb.x1-a.bb.x0?l:a);
-      const mw=measureW(widest.text,fs,weight,'Inter');if(mw>0)fs=fs*Math.max(.72,Math.min(1.4,(widest.bb.x1-widest.bb.x0)/mw));
+      const mw=measureW(widest.text,fs,weight,'Inter'),wantW=widest.bb.x1-widest.bb.x0;let lsp=0;
+      // spaced-out lettering ("F R E E"): keep the size from the height and copy the spacing instead
+      if(mw>0&&wantW/mw>1.3&&widest.text.length>1&&!/\s/.test(widest.text)){lsp=(wantW-mw)/(widest.text.length-1)}
+      else if(mw>0)fs=fs*Math.max(.72,Math.min(1.4,wantW/mw));
       const cs=it.lines.map(l=>(l.bb.x0+l.bb.x1)/2),ls=it.lines.map(l=>l.bb.x0),rs=it.lines.map(l=>l.bb.x1),spread=a=>Math.max(...a)-Math.min(...a);
       const align=it.lines.length<2?'center':spread(cs)<=Math.min(spread(ls),spread(rs))+2?'center':spread(ls)<spread(rs)?'left':'right';
       const lh=it.lines.length>1?Math.max(.9,Math.min(1.6,((it.lines[it.lines.length-1].bb.y0-it.lines[0].bb.y0)/(it.lines.length-1))/fs)):1.15;
@@ -1587,7 +1699,7 @@ async function splitLayers(){
       const cyy=(bb.y0+bb.y1)/2;
       texts.push({id:uid(),name:it.lines.map(l=>l.text).join(' ').slice(0,28),type:'text',
         x:R((bb.x0-padX)*kx),y:R((cyy-bh/2)*ky),width:R(bw*kx),height:R(bh*ky),
-        text:it.lines.map(l=>l.text).join('\n'),fontFamily:'Inter',fontSize:R(fs*ky),fontStyle:weight,fill:toHex(col),align,lineHeight:+lh.toFixed(2)})});
+        text:it.lines.map(l=>l.text).join('\n'),fontFamily:'Inter',fontSize:R(fs*ky),fontStyle:weight,fill:toHex(col),align,lineHeight:+lh.toFixed(2),...(lsp?{letterSpacing:R(lsp*kx)}:{})})});
     const fillMask=dilate(tmask,Wp,Hp,Math.max(2,Math.round(Math.min(Wp,Hp)/400)));
     // text on a solid colour (pills, badges): paint it with that colour, so no ghost of the letters is left
     flat.forEach(f=>{if(!f.uni)return;const r=Math.max(2,Math.round(Math.min(Wp,Hp)/400));
@@ -2332,7 +2444,7 @@ function hideHint(){$('#focushint').style.display='none'}
 function save(){persistNow(true)}
 function load(){try{const s=localStorage.getItem('tf-proto');if(s){const o=JSON.parse(s);legacyWork=o;fontStore=o.fonts||[]}}catch(e){}}
 function loadAssets(){return Promise.all(Object.entries(assets).map(([k,src])=>new Promise(res=>{const i=new Image();i.onload=()=>{IMG[k]=i;res()};i.onerror=res;i.src=src})))}
-const SC=[['Ctrl + click','Select the exact layer under the cursor, even inside a group'],['Shift + click','Add or remove a layer from the selection'],['Drag on an empty spot','Draw a box to select every layer it touches (Shift adds, Ctrl picks layers inside groups)'],['Alt + drag','Duplicate and drag the copy'],['Shift + drag','Move in a straight line; keep proportions when resizing'],['Alt + resize handle','Resize from the centre (add Shift to keep proportions)'],['Ctrl + Alt + T','Free transform with rotation (Ctrl+T is kept by the browser). Enter confirms, Esc cancels'],['Arrow / Shift + Arrow','Nudge 1px / 10px'],['Ctrl + J','Duplicate layer'],['Ctrl + G / Ctrl + Shift + G','Group / ungroup'],['Ctrl + [ / ]','Move layer down / up (add Shift for bottom / top)'],['Ctrl + Z / Ctrl + Shift + Z / Ctrl + Y','Undo / redo'],['Space + drag','Pan'],['Ctrl + + / − / 0 / 1','Zoom in / out / fit / 100%'],['Alt + scroll or Ctrl + scroll','Zoom at the cursor'],['Ctrl + ; / Ctrl + \'','Guides / grid on or off'],['Hold Ctrl while dragging','Turn snapping off'],['Drag from a ruler','Pull out a guide (layers snap to it); double-click the ruler corner to clear guides'],['Delete / Backspace','Delete layer (hides it if you are editing one product)'],['V / T','Move tool / text tool'],['M L W C I J S B E G R O U H Z','Toolbox tools (turn the toolbox on with Tools). Shift + the same key switches to the next tool in that group'],['[ / ]','Brush smaller / bigger'],['Shift + [ / Shift + ]','Brush softer / harder (25% steps)'],['1 … 9 / 0','Brush opacity or strength 10% … 90% / 100%. Type two numbers quickly for an exact value, e.g. 4 then 5 = 45%'],['X / D','Swap foreground and background colours / reset to black and white'],['Ctrl + A / Ctrl + D','Select all / deselect'],['Ctrl + S','Save'],['Ctrl + Alt + Shift + W','Export images (sizes, file type, quality, file names)'],['Ctrl + V','Paste an image as a new layer (or drag image files onto the canvas, or use Add image)'],['Double-click text','Edit text; Enter to finish, Shift+Enter for a new line, Esc to cancel'],['?','This list']];
+const SC=[['Ctrl + click','Select the exact layer under the cursor, even inside a group'],['Shift + click','Add or remove a layer from the selection'],['Drag on an empty spot','Draw a box to select every layer it touches (Shift adds, Ctrl picks layers inside groups)'],['Alt + drag','Duplicate and drag the copy'],['Shift + drag','Move in a straight line; keep proportions when resizing'],['Alt + resize handle','Resize from the centre (add Shift to keep proportions)'],['Ctrl + Alt + T','Free transform with rotation (Ctrl+T is kept by the browser). Enter confirms, Esc cancels'],['Arrow / Shift + Arrow','Nudge 1px / 10px'],['Ctrl + J','Duplicate layer'],['Ctrl + G / Ctrl + Shift + G','Group / ungroup'],['Ctrl + [ / ]','Move layer down / up (add Shift for bottom / top)'],['Ctrl + Z / Ctrl + Shift + Z / Ctrl + Y','Undo / redo'],['Space + drag','Pan'],['Ctrl + + / − / 0 / 1','Zoom in / out / fit / 100%'],['Alt + scroll or Ctrl + scroll','Zoom at the cursor'],['Ctrl + ; / Ctrl + \'','Guides / grid on or off'],['Hold Ctrl while dragging','Turn snapping off'],['Drag from a ruler','Pull out a guide (layers snap to it); double-click the ruler corner to clear guides'],['Delete / Backspace','Delete layer (hides it if you are editing one product)'],['Esc','Deselect (cancels a crop or free transform first)'],['V / T','Move tool / text tool'],['M L W C I J S B E G R O U H Z','Toolbox tools (turn the toolbox on with Tools). Shift + the same key switches to the next tool in that group'],['[ / ]','Brush smaller / bigger'],['Shift + [ / Shift + ]','Brush softer / harder (25% steps)'],['1 … 9 / 0','Brush opacity or strength 10% … 90% / 100%. Type two numbers quickly for an exact value, e.g. 4 then 5 = 45%'],['X / D','Swap foreground and background colours / reset to black and white'],['Ctrl + A / Ctrl + D','Select all / deselect'],['Ctrl + S','Save'],['Ctrl + Alt + Shift + W','Export images (sizes, file type, quality, file names)'],['Ctrl + V','Paste an image as a new layer (or drag image files onto the canvas, or use Add image)'],['Double-click text','Edit text; Enter to finish, Shift+Enter for a new line, Esc to cancel'],['?','This list']];
 function openModal(){$('#sctable').innerHTML=SC.map(([k,v])=>`<tr><td>${k.split(' / ').map(x=>x.split(' + ').map(y=>`<span class="kbd">${esc(y)}</span>`).join(' + ')).join(' / ')}</td><td>${esc(v)}</td></tr>`).join('');$('#modal').style.display='flex'}
 function closeModal(){$('#modal').style.display='none'}
 
@@ -2380,6 +2492,8 @@ function wire(){
   $('#docName').onclick=()=>{if(!openDoc)return;const list=openDoc.kind==='campaign'?store.campaigns:store.layouts,rec=list.find(x=>x.id===openDoc.id);ask('Rename','',rec.name,'Rename',v=>{rec.name=v;$('#docName').textContent=(openDoc.kind==='layout'?'Layout: ':'')+v;queueSave()})};
   $('#home').addEventListener('click',e=>{const b=e.target.closest('[data-act]');const w=e.target.closest('[data-id]');if(!b||!w)return;homeAction(w.dataset.kind,w.dataset.id,b.dataset.act)});
   $('#newCampBtn').onclick=()=>openNewCampaign();
+  $('#psdLayBtn').onclick=()=>{$('#psdNewIn').value='';$('#psdNewIn').click()};
+  $('#psdNewIn').addEventListener('change',e=>{const f=e.target.files[0];if(f)openPsd(f,true)});
   $('#newLayBtn').onclick=()=>ask('New layout','Starts as a blank 1200×1200 canvas with a product name and product photo that change per product.','New layout','Create',v=>{const l={id:'lay_'+uid(),name:v,base:starterLayout(),sampleName:'Product name here',sampleImg:'washer',updatedAt:now()};store.layouts.push(l);openEditor('layout',l.id);persistNow(false)});
   $('#askYes').onclick=askOk;$('#askNo').onclick=()=>{$('#askDlg').style.display='none'};$('#askIn').addEventListener('keydown',e=>{if(e.key==='Enter')askOk()});
   ['ncClose','ncCancel'].forEach(x=>$('#'+x).onclick=()=>{$('#ncDlg').style.display='none'});$('#ncGo').onclick=ncCreate;
