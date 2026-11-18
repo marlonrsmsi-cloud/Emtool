@@ -87,6 +87,8 @@ footer .lbl{width:150px;flex-shrink:0;line-height:1.5;color:#52525b}
 .fmt.on{background:#18181b;color:#fff;border-color:#18181b}
 .skuPick{display:flex;align-items:center;gap:8px;border:1px solid #e4e4e7;border-radius:8px;padding:6px;cursor:pointer}
 .skuPick img{width:44px;height:44px;border-radius:4px}
+.skuPick span{font-size:12px;word-break:break-all;line-height:1.3}
+.skuPick span .muted{word-break:normal;white-space:nowrap}
 #modal table{width:100%;border-collapse:collapse}
 #modal td{padding:5px 4px;border-bottom:1px solid #f4f4f5;vertical-align:top}
 #modal td:first-child{width:46%}
@@ -95,7 +97,9 @@ body.home #home{display:block}
 body.home #opts,body.home #main,body.home footer,body.home .ed{display:none!important}
 body.lay .camponly{display:none!important}
 body:not(.home) .homeonly{display:none}
-header .tabs{flex:1}
+header .tabs{flex:1;min-width:120px}
+header button{padding:5px 9px}
+#saveState{max-width:90px;overflow:hidden;text-overflow:ellipsis}
 .hhead{display:flex;align-items:center;gap:10px;margin:8px 0 12px}
 .hhead h2{font-size:17px;margin:0;flex:1}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:28px}
@@ -115,7 +119,12 @@ header .tabs{flex:1}
 .layPick label{border:2px solid #e4e4e7;border-radius:8px;padding:5px;cursor:pointer;text-align:center;font-size:12px}
 .layPick label.on{border-color:#2563eb}
 .layPick img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;display:block;margin-bottom:4px}
-.prow{display:grid;grid-template-columns:44px 1fr 1.6fr auto auto;gap:6px;align-items:center;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px}.chips button{font-size:12px;padding:2px 8px;border-radius:12px}
+.cdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.sgrp{flex-shrink:0;align-self:stretch;display:flex;align-items:center;padding:0 2px 0 8px;border-left:2px solid #e4e4e7;font-size:12px;font-weight:600;color:#52525b;writing-mode:vertical-rl;transform:rotate(180deg)}
+#catSel{font:inherit;padding:4px 6px;border:1px solid #d4d4d8;border-radius:6px;max-width:170px}
+.catrow{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.prow{display:grid;grid-template-columns:44px 1fr 1.4fr 130px auto auto;gap:6px;align-items:center;margin-bottom:6px}
 .prow img{width:44px;height:44px;object-fit:contain;background:#f4f4f5;border-radius:4px}
 .prow input{font:inherit;padding:4px 6px;border:1px solid #d4d4d8;border-radius:6px;min-width:0}
 #toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:#18181b;color:#fff;padding:8px 14px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:520px;text-align:center}
@@ -124,6 +133,98 @@ header .tabs{flex:1}
 .ta-edit{position:absolute;z-index:10;border:1.5px dashed #2563eb;background:rgba(255,255,255,.92);resize:none;outline:none;padding:0;margin:0;overflow:hidden;font-family:Inter,sans-serif}
 .muted{color:#71717a}
 </style>
+<style id="psTheme">
+/* Photoshop-style dark theme */
+:root{--app:#1f1f1f;--panel:#2b2b2b;--panel2:#262626;--well:#1f1f1f;--line:#111;--line2:#3d3d3d;--inb:#474747;--tx:#d6d6d6;--tx2:#f2f2f2;--mut:#9a9a9a;--acc:#1473e6;--acc2:#2c4f7c;--hov:#3a3a3a;--pb:#282828}
+html,body{font-family:Inter,system-ui,"Segoe UI",sans-serif;font-size:12px;color:var(--tx);background:var(--app);color-scheme:dark}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#4a4a4a;border-radius:5px;border:2px solid var(--panel)}::-webkit-scrollbar-track{background:transparent}
+a{color:#4c9ffe}a:hover{color:#80bbff}
+header{background:var(--app);border-bottom:1px solid var(--line)}
+header .title{color:var(--tx2);display:flex;align-items:center;gap:8px}
+header .title::before{content:"Em";display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:4px;background:var(--acc);color:#fff;font-weight:800;font-size:12px}
+header .title span{color:var(--mut)!important}
+button,.btn{background:#383838;border:1px solid #4a4a4a;color:var(--tx);border-radius:4px}
+button:hover{background:#454545}
+button:disabled{opacity:.45}
+.pri,[style*="background:#18181b"]{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}
+.pri:hover,[style*="background:#18181b"]:hover{background:#0d66d0!important}
+input,select,textarea{color-scheme:dark;background:var(--well)!important;color:var(--tx)!important;border-color:var(--inb)!important;border-radius:3px!important}
+input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--acc);background:transparent!important}
+input[type=color]{padding:1px!important}
+input:focus,select:focus,textarea:focus{outline:1px solid var(--acc);outline-offset:-1px}
+.tab{background:var(--panel2);border:1px solid var(--line2);border-radius:4px 4px 0 0;color:var(--mut)}
+.tab.on{background:var(--panel);color:var(--tx2);border-color:#555;box-shadow:inset 0 2px 0 var(--acc)}
+.tab .dot{border-color:var(--app)}
+label.all{border-color:var(--inb)}label.all.on{background:#4a3a12;border-color:#d39e2a}
+#opts{background:var(--panel);border-bottom:1px solid var(--line)}
+#opts label{color:var(--mut)}
+.tbn.on,.fmt.on,#toolsBtn.on{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}
+#toolbox{background:var(--panel);border-right:1px solid var(--line);width:44px}
+.tb{color:#cfcfcf;border-radius:3px}.tb:hover{background:var(--hov)}.tb.on{background:#4a4a4a;color:#fff;box-shadow:inset 0 0 0 1px #6a6a6a}
+.sw div{border-color:#cfcfcf}
+#ctx{background:#333;border:1px solid #4a4a4a;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.55)}
+#ctx button{color:var(--tx)}#ctx button:hover{background:#454545}
+#ctx button.pri{background:var(--acc)}#ctx .sep{background:#4a4a4a}
+#pop{background:#333;border-color:#4a4a4a;box-shadow:0 10px 28px rgba(0,0,0,.6)}
+/* right dock: Properties over Layers */
+#dock{width:300px;flex-shrink:0;display:flex;flex-direction:column;background:var(--panel);border-left:1px solid var(--line);min-height:0}
+#dock aside{width:auto;background:var(--panel);border:none!important;min-height:0}
+#dock #props{flex:1 1 52%;overflow-y:auto}
+#dock #layers{flex:1 1 48%;overflow-y:auto;border-top:1px solid var(--line)!important}
+#dock aside::before{display:block;position:sticky;top:0;z-index:2;background:var(--panel2);border-bottom:1px solid var(--line);padding:7px 12px;font-weight:600;color:var(--tx2);font-size:12px}
+#dock #props::before{content:"Properties";margin:-10px -12px 8px}
+#layers .ph{position:sticky;top:0;z-index:2;background:var(--panel2);border-bottom:1px solid var(--line);padding:7px 12px;font-size:12px}
+aside{background:var(--panel)}
+.ph{color:var(--tx2)}
+.sec{border-top:1px solid var(--line2);color:var(--tx2)}
+.row{border-bottom:1px solid #303030}
+.row:hover{background:#333}
+.row.sel{background:var(--acc2)}
+.row .ic{color:#a8a8a8}.row .ic.off{color:#555}
+.row.hid .nm{color:#6a6a6a}
+.tag{background:#3b2f63;color:#cbb8ff}.tag.x{background:#4a3a12;color:#f3cf7a}.tag.o{background:#4d2b14;color:#ffb27a}
+#wrap{background:var(--pb)}
+.ruler{background:#323232}
+#rulerT{border-bottom:1px solid var(--line)}#rulerL{border-right:1px solid var(--line)}
+#rulerC{background:#323232;border-color:var(--line)}
+#banner.sku{background:rgba(20,20,20,.85);color:#eee;border:1px solid #444}
+#banner.all{background:#d39e2a;color:#111}
+#zoom,#focushint{background:rgba(40,40,40,.9);color:var(--tx);border:1px solid #444}
+#focushint{color:#f3cf7a}
+footer{background:var(--panel);border-top:1px solid var(--line)}
+footer .lbl{color:var(--mut)}footer .lbl b{color:var(--tx2)}
+.thumb{color:var(--mut)}.thumb img{background:#3a3a3a;border-radius:3px}
+.thumb.on img{border-color:var(--acc)}.thumb.on{color:var(--tx2)}
+.sgrp{border-left-color:#444;color:var(--mut)}
+.fld label{color:var(--mut)}
+.kbd{background:#383838;border-color:#555;color:var(--tx)}
+#modal,.dlg{background:rgba(0,0,0,.6)}
+#modal .box,.dlg .box{background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 18px 50px rgba(0,0,0,.6);color:var(--tx)}
+#modal .box b,.dlg .box b{color:var(--tx2)}
+#modal td{border-bottom-color:#363636}
+.skuPick{border-color:var(--line2);background:var(--panel2)}.skuPick:hover{border-color:#555}
+.skuPick img{background:#3a3a3a}
+[style*="background:#f4f4f5"],[style*="background:#fafafa"]{background:var(--panel2)!important;border-color:var(--line2)!important}
+[style*="color:#b91c1c"]{color:#ff7b72!important}
+[style*="color:#71717a"],[style*="color:#52525b"]{color:var(--mut)!important}
+[style*="border:1px solid #e4e4e7"],[style*="border:2px solid #e4e4e7"]{border-color:var(--line2)!important}
+.muted{color:var(--mut)}
+#home{background:var(--app)}
+.hhead h2{color:var(--tx2);font-weight:600;font-size:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.card:hover{border-color:#4a4a4a}
+.card .th{background:#232323}
+.card .nm2{color:var(--tx2)}
+.empty{border-color:#444;color:var(--mut)}
+#docName{color:var(--tx2)}#docName:hover{background:var(--hov)}
+#saveState{color:var(--mut)}
+.layPick label{border-color:var(--line2);background:var(--panel2)}.layPick label.on{border-color:var(--acc)}
+.prow img{background:#3a3a3a}
+#toast{background:#3a3a3a;color:#f2f2f2;border:1px solid #555;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+#loading{background:var(--app);color:var(--mut)}
+.ta-edit{background:rgba(30,30,30,.9);color:#f2f2f2;border-color:var(--acc)}
+.chips button.on{background:var(--acc2);border-color:var(--acc)}
+</style>
 </head>
 <body>
 <div id="loading">Loading the prototype…</div>
@@ -131,6 +232,7 @@ header .tabs{flex:1}
   <span class="title">EM Tool <span style="font-weight:400;color:#71717a">· prototype</span></span>
   <button id="homeBtn" class="ed" title="Back to Home">← Home</button>
   <span id="docName" class="ed" title="Click to rename"></span>
+  <select id="catSel" class="ed camponly" title="Show one category"></select>
   <div class="tabs ed" id="tabs"></div>
   <span style="flex:1" class="homeonly"></span>
   <span id="saveState"></span>
@@ -138,12 +240,12 @@ header .tabs{flex:1}
   <button id="applyBtn" class="ed camponly" style="background:#18181b;color:#fff;border-color:#18181b">Apply to… <span id="applyCount"></span></button>
   <button class="ed" id="toolsBtn" title="Show or hide the Photopea-style toolbox">Tools</button>
   <button class="ed camponly" id="exportBtn" title="Export images (Ctrl+Alt+Shift+W)">Export</button>
-  <button class="ed" id="addImgBtn" title="Add image (or drag a file onto the canvas, or Ctrl+V)">Add image</button>
+  <button class="ed" id="addImgBtn" title="Add image (or drag a file onto the canvas, or Ctrl+V)">+ Image</button>
   <input type="file" id="fileIn" accept="image/*" multiple hidden>
   <input type="file" id="replIn" accept="image/*" hidden>
-  <button class="ed" id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
-  <button class="ed" id="redoBtn" title="Redo (Ctrl+Shift+Z)">Redo</button>
-  <button id="helpBtn" title="All shortcuts (?)">Shortcuts ?</button>
+  <button class="ed" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+  <button class="ed" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
+  <button id="helpBtn" title="All shortcuts (?)" aria-label="Shortcuts">?</button>
 </header>
 <div id="home">
   <div class="hhead"><h2>Campaigns</h2><button id="newCampBtn" class="pri">+ New campaign</button></div>
@@ -154,7 +256,6 @@ header .tabs{flex:1}
 </div>
 <div id="opts"></div>
 <div id="main">
-  <aside id="layers"></aside>
   <div id="toolbox"></div>
   <div id="wrap">
     <div id="stage"></div>
@@ -164,7 +265,7 @@ header .tabs{flex:1}
     <div id="zoom">100%</div>
     <div id="focushint">Click the canvas first so your keys go to the editor</div>
   </div>
-  <aside id="props"></aside>
+  <div id="dock"><aside id="props"></aside><aside id="layers"></aside></div>
 </div>
 <footer>
   <div class="lbl"><b>All products</b><br>Live preview of every SKU.<br>Click one to edit it.</div>
@@ -182,6 +283,7 @@ header .tabs{flex:1}
   <label style="display:block;margin-bottom:6px"><input type="radio" name="scope" value="all" id="scopeAll"> <span id="scopeAllLbl">All changes on this product</span></label>
   <div id="applyList" class="muted" style="line-height:1.6;margin-bottom:8px"></div>
   <div style="display:flex;align-items:center;margin:10px 0 6px"><b style="flex:1">Apply to these products</b><a href="#" id="skuAll">Select all</a>&nbsp;·&nbsp;<a href="#" id="skuNone">None</a></div>
+  <div class="chips" id="applyChips"></div>
   <div id="applySkus" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px"></div>
   <div id="applyErr" style="color:#b91c1c;margin-top:8px;min-height:18px"></div>
   <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px"><button id="applyCancel">Cancel</button><button id="applyGo" style="background:#18181b;color:#fff;border-color:#18181b">Apply</button></div>
@@ -192,6 +294,7 @@ header .tabs{flex:1}
   <label style="display:block;margin-bottom:3px"><input type="radio" name="exP" value="cur" checked> <span id="exCurLbl">This product</span></label>
   <label style="display:block;margin-bottom:3px"><input type="radio" name="exP" value="all"> All products (<span id="exAllN"></span>)</label>
   <label style="display:block;margin-bottom:6px"><input type="radio" name="exP" value="pick"> Choose products</label>
+  <div class="chips" id="exChips"></div>
   <div id="exPick" style="display:none;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-bottom:6px"></div>
   <div style="font-weight:600;margin:12px 0 6px">Sizes (px)</div>
   <div id="exSizes" style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px 12px"></div>
@@ -232,18 +335,41 @@ header .tabs{flex:1}
     <div id="ncSheetRow">Spreadsheet: <input type="file" id="ncSheet" accept=".csv,.xlsx,.xls"></div>
     <div id="ncPhotoRow">Photos: <input type="file" id="ncPhotos" accept="image/*" multiple> <span class="muted" id="ncPhotoN"></span></div>
   </div>
+  <div class="grid2" style="margin-top:10px">
+    <div class="fld" id="ncCatRow"><label>Category for these photos (optional)</label><input id="ncCat" list="ncCatList" placeholder="Washers" style="width:100%;font:inherit;padding:5px 7px;border:1px solid #d4d4d8;border-radius:6px"><datalist id="ncCatList"></datalist></div>
+    <div class="fld"><label>Copy categories from</label><select id="ncCopy" style="width:100%;font:inherit;padding:5px;border:1px solid #d4d4d8;border-radius:6px"></select></div>
+  </div>
   <div id="ncErr" style="color:#b91c1c;min-height:18px;margin-top:8px"></div>
   <div style="display:flex;justify-content:flex-end;gap:8px"><button id="ncCancel">Cancel</button><button id="ncGo" class="pri">Create campaign</button></div>
 </div></div>
 <div id="prodDlg" class="dlg"><div class="box" style="width:680px">
   <div style="display:flex;align-items:center"><b style="font-size:15px;flex:1">Products in this campaign</b><button id="prClose">Done</button></div>
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0">
+    <button id="prBgs">Backgrounds…</button>
     <button id="prPhotos">Add from photos…</button><button id="prSheet">Import spreadsheet…</button><button id="prTpl">Download template</button>
     <input type="file" id="prPhotoIn" accept="image/*" multiple hidden><input type="file" id="prSheetIn" accept=".csv,.xlsx,.xls" hidden><input type="file" id="prSheetPhotos" accept="image/*" multiple hidden><input type="file" id="prChangeIn" accept="image/*" hidden>
   </div>
-  <div class="prow muted" style="font-size:12px"><span></span><span>SKU</span><span>Product name</span><span></span><span></span></div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">Category for new photos <input id="prCat" list="prCatList" placeholder="none" style="font:inherit;padding:4px 6px;border:1px solid #d4d4d8;border-radius:6px;width:170px"><datalist id="prCatList"></datalist>
+    <span style="flex:1"></span><button id="prCats">Categories…</button></div>
+  <div id="catMgr" style="display:none;background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;padding:10px;margin-bottom:10px"></div>
+  <div class="prow muted" style="font-size:12px"><span></span><span>SKU</span><span>Product name</span><span>Category</span><span></span><span></span></div>
   <div id="prList" style="max-height:360px;overflow:auto"></div>
   <p class="muted" style="line-height:1.5;margin-bottom:0">A spreadsheet needs a SKU column. Optional columns: Product name, Image file (matched to the photos you pick next), and one column per text layer that changes per product.</p>
+</div></div>
+<div id="bgDlg" class="dlg"><div class="box" style="width:680px">
+  <div style="display:flex;align-items:center"><b style="font-size:15px;flex:1">Backgrounds</b><button id="bgClose">Done</button></div>
+  <div class="fld" style="margin-top:12px"><label>Background layer</label><div style="display:flex;gap:6px"><select id="bgLayer" style="flex:1;font:inherit;padding:5px;border:1px solid #d4d4d8;border-radius:6px"></select><button id="bgAddLayer">+ Add scene background layer</button></div></div>
+  <div style="display:flex;align-items:center;gap:8px;margin:10px 0 6px"><b style="flex:1">Your backgrounds</b><button id="bgUpload">Upload backgrounds…</button><input type="file" id="bgFileIn" accept="image/*" multiple hidden></div>
+  <div id="bgTiles" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;max-height:210px;overflow:auto"></div>
+  <div style="font-weight:600;margin:12px 0 6px">Apply the selected background to</div>
+  <label class="chk"><input type="radio" name="bgMode" value="cur" checked> This product (<span id="bgCurSku"></span>)</label>
+  <label class="chk" id="bgCatRow"><input type="radio" name="bgMode" value="cat"> Every product in category <select id="bgCat" style="font:inherit;padding:3px;border:1px solid #d4d4d8;border-radius:6px"></select></label>
+  <label class="chk"><input type="radio" name="bgMode" value="all"> All products</label>
+  <label class="chk"><input type="radio" name="bgMode" value="match"> Match file names to SKUs automatically (e.g. FV1285S4W_kitchen.jpg → FV1285S4W)</label>
+  <label class="chk"><input type="radio" name="bgMode" value="spread"> Spread all uploaded backgrounds across products, in order</label>
+  <label class="chk"><input type="radio" name="bgMode" value="clear"> Remove the background from: this product</label>
+  <div id="bgErr" style="color:#b91c1c;min-height:18px;margin-top:6px"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="muted">Tip: select the product photo and use <b>Blend</b> for a shadow and colour match.</span><button id="bgGo" class="pri">Apply</button></div>
 </div></div>
 <div id="toast"></div>
 <div id="offscreen" style="position:absolute;left:-9999px;top:0;width:10px;height:10px;overflow:hidden"></div>
@@ -320,10 +446,11 @@ let showGuides=true, showGrid=false, hist=[], fut=[];
 function walk(arr,f,parent){arr.forEach((d,i)=>{f(d,arr,i,parent);if(d.children)walk(d.children,f,d)})}
 function findIn(arr,id){let r=null;walk(arr,(d,a,i)=>{if(!r&&d.id===id)r={d,arr:a,i}});return r}
 function reId(d){d.id=uid();if(d.children)d.children.forEach(reId);return d}
-function effectiveOf(b,s){
-  const doc=clone(b);
-  walk(doc,n=>{const o=s.overrides[n.id];if(o)Object.assign(n,clone(o));if(n.slot==='name')n.text=s.name;if(n.slot==='image')n.img=s.img;if(n.slot==='text'&&s.values&&s.values[n.id]!=null)n.text=s.values[n.id]});
-  return doc.concat(clone(s.extras).map(e=>(e.extra=true,e)));
+function effectiveOf(b,s,cs){
+  const doc=clone(b),c=s.cat&&(cs||cats).find(x=>x.id===s.cat);
+  walk(doc,n=>{if(n.slot==='cat'&&c&&c.values[n.id]!=null){if(n.type==='image')n.img=c.values[n.id];else n.text=c.values[n.id]}
+    const o=s.overrides[n.id];if(o)Object.assign(n,clone(o));if(n.slot==='name')n.text=s.name;if(n.slot==='image')n.img=s.img;if(n.slot==='text'&&s.values&&s.values[n.id]!=null)n.text=s.values[n.id];if(n.slot==='pimg'&&s.values&&s.values[n.id])n.img=s.values[n.id]});
+  const out=doc.concat(clone(s.extras).map(e=>(e.extra=true,e)));attachBg(out);return out;
 }
 function effective(i){return effectiveOf(base,skus[i])}
 const extrasTarget=()=>applyAll?base:skus[cur].extras;
@@ -374,10 +501,15 @@ function build(d){
   }
   else if(d.type==='image'){
     n=new Konva.Group(common);
+    if(d.fit==='cover'||d.cornerRadius){const r=Math.min(d.cornerRadius||0,d.width/2,d.height/2),W2=d.width,H2=d.height;n.clipFunc(ctx=>{ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(W2-r,0);ctx.quadraticCurveTo(W2,0,W2,r);ctx.lineTo(W2,H2-r);ctx.quadraticCurveTo(W2,H2,W2-r,H2);ctx.lineTo(r,H2);ctx.quadraticCurveTo(0,H2,0,H2-r);ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);ctx.closePath()})}
     n.add(new Konva.Rect({x:0,y:0,width:d.width,height:d.height,fill:'rgba(0,0,0,0)',listening:false}));
     const im=IMG[d.img];
-    if(im){const s=Math.min(d.width/im.width,d.height/im.height),w=im.width*s,h=im.height*s;
-      const ki=new Konva.Image({image:im,x:(d.width-w)/2,y:(d.height-h)/2,width:w,height:h});n.add(ki);try{ki.cache();ki.drawHitFromCache(10)}catch(e){}}
+    if(im){const nw=im.naturalWidth||im.width,nh=im.naturalHeight||im.height,s=d.fit==='cover'?Math.max(d.width/nw,d.height/nh):Math.min(d.width/nw,d.height/nh),w=nw*s,h=nh*s,x0=(d.width-w)/2,y0=(d.height-h)/2,bl=d.blend||{};
+      if(+bl.shadow>0){const sh=new Konva.Ellipse({x:x0+w/2,y:y0+h-h*.015,radiusX:w*.44,radiusY:Math.max(6,h*.045),fill:'#000',opacity:Math.min(.75,+bl.shadow/100*.75),listening:false});
+        try{sh.cache({offset:40});sh.filters([Konva.Filters.Blur]);sh.blurRadius(Math.max(6,h*.03))}catch(e){}n.add(sh)}
+      const ki=new Konva.Image({image:blendSrc(d,im,w,h),x:x0,y:y0,width:w,height:h});ki.setAttr('srcKey',d.img);
+      if(+bl.shadow>0){ki.shadowColor('#000');ki.shadowBlur(Math.max(10,h*.06));ki.shadowOffset({x:0,y:Math.max(6,h*.03)});ki.shadowOpacity(+bl.shadow/100*.35);ki.shadowEnabled(true)}
+      n.add(ki);try{ki.cache({pixelRatio:SHARP,offset:+bl.shadow>0?Math.max(30,h*.12):0});ki.drawHitFromCache(10)}catch(e){}}
   }
   if(d.grad&&n.fillLinearGradientStartPoint&&d.type!=='group'&&d.type!=='image'){const g=d.grad;n.fillPriority('linear-gradient');n.fillLinearGradientStartPoint({x:g.x1,y:g.y1});n.fillLinearGradientEndPoint({x:g.x2,y:g.y2});n.fillLinearGradientColorStops([0,g.c1,1,g.c2])}
   applyFx(n,d);
@@ -385,6 +517,32 @@ function build(d){
   return n;
 }
 const nodeById=id=>content.findOne(n=>n.getAttr('lid')===id);
+/* Blend: colour match toward the background and soft edges, cached per settings */
+const avgCache=new Map(),blendCache=new Map();
+function hexRgb(h){const n=parseInt(String(h).slice(1),16);return[n>>16&255,n>>8&255,n&255]}
+function avgColor(key){if(avgCache.has(key))return avgCache.get(key);const im=IMG[key];if(!im)return null;const c=document.createElement('canvas');c.width=c.height=24;const x=c.getContext('2d');x.drawImage(im,0,0,24,24);
+  const a=x.getImageData(0,0,24,24).data;let r=0,g=0,b=0,n=0;for(let i=0;i<a.length;i+=4){if(a[i+3]<128)continue;r+=a[i];g+=a[i+1];b+=a[i+2];n++}const v=n?[r/n,g/n,b/n]:null;avgCache.set(key,v);return v}
+function overlaps(a,b){return(a.x||0)<(b.x||0)+(b.width||0)&&(a.x||0)+(a.width||0)>(b.x||0)&&(a.y||0)<(b.y||0)+(b.height||0)&&(a.y||0)+(a.height||0)>(b.y||0)}
+function attachBg(doc){for(let i=0;i<doc.length;i++){const d=doc[i];if(d.type!=='image'||!d.blend||!(+d.blend.match>0))continue;
+  for(let j=i-1;j>=0;j--){const b=doc[j];if(b.visible===false||!overlaps(d,b))continue;
+    if(b.type==='image'&&IMG[b.img]){d._bg=avgColor(b.img);break}if((b.type==='rect'||b.type==='ellipse')&&/^#[0-9a-f]{6}$/i.test(b.fill||'')){d._bg=hexRgb(b.fill);break}}}}
+function blendSrc(d,im,w,h){const base=sharpSrc(d.img,im,w,h),bl=d.blend||{},m=+bl.match||0,f=+bl.soften||0;if(!(m>0&&d._bg)&&!(f>0))return base;
+  const ck=[d.img,Math.round(w),Math.round(h),m,f,d._bg?d._bg.map(Math.round).join('.'):''].join('|');if(blendCache.has(ck))return blendCache.get(ck);
+  const c=document.createElement('canvas');c.width=base.width;c.height=base.height;const x=c.getContext('2d');x.drawImage(base,0,0);
+  if(m>0&&d._bg){const id=x.getImageData(0,0,c.width,c.height),a=id.data;let r=0,g=0,b=0,n=0;for(let i=0;i<a.length;i+=4){if(a[i+3]<128)continue;r+=a[i];g+=a[i+1];b+=a[i+2];n++}
+    if(n){const k=m/100,pm=[r/n,g/n,b/n],bg=d._bg,pl=(pm[0]+pm[1]+pm[2])/3,bgl=(bg[0]+bg[1]+bg[2])/3,
+      tint=[0,1,2].map(i=>(bg[i]-bgl)*.55*k),lum=(bgl-pl)*.25*k;
+      for(let i=0;i<a.length;i+=4){if(!a[i+3])continue;for(let ch=0;ch<3;ch++)a[i+ch]=Math.max(0,Math.min(255,a[i+ch]+tint[ch]+lum))}x.putImageData(id,0,0)}}
+  if(f>0){const t=document.createElement('canvas');t.width=c.width;t.height=c.height;const tx=t.getContext('2d');tx.filter='blur('+(f*SHARP*.6).toFixed(1)+'px)';tx.drawImage(c,0,0);
+    x.globalCompositeOperation='destination-in';x.drawImage(t,0,0);x.globalCompositeOperation='source-over'}
+  if(blendCache.size>200)blendCache.clear();blendCache.set(ck,c);return c}
+/* High-quality resize: big photos are shrunk in halving steps with smoothing 'high' and kept at SHARP× the size they're drawn at, so edges stay clean in exports and when zoomed in. */
+const SHARP=2,sharpCache=new Map();
+function sharpSrc(key,im,w,h){const nw=im.naturalWidth||im.width,nh=im.naturalHeight||im.height,tw=Math.max(1,Math.round(w*SHARP)),th=Math.max(1,Math.round(h*SHARP));
+  if(nw<=tw*1.05||!key)return im;const ck=key+'|'+tw+'x'+th;if(sharpCache.has(ck))return sharpCache.get(ck);
+  let c=im,cw=nw,ch=nh;while(cw/2>tw){const n=document.createElement('canvas');n.width=Math.round(cw/2);n.height=Math.round(ch/2);const x=n.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(c,0,0,n.width,n.height);c=n;cw=n.width;ch=n.height}
+  const out=document.createElement('canvas');out.width=tw;out.height=th;const x=out.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(c,0,0,tw,th);
+  if(sharpCache.size>300)sharpCache.clear();sharpCache.set(ck,out);return out}
 const FX_DEF={stroke:{on:false,color:'#ffffff',width:4},shadow:{on:false,color:'#000000',blur:12,ox:6,oy:6,op:.35}};
 function applyFx(n,d){const fx=d.fx;if(!fx)return;
   if(fx.stroke&&fx.stroke.on&&['text','rect','ellipse'].includes(d.type)){n.stroke(fx.stroke.color);n.strokeWidth(+fx.stroke.width||0);if(d.type==='text')n.fillAfterStrokeEnabled(true)}
@@ -413,9 +571,9 @@ function renderSel(){
 }
 
 /* ---------- history ---------- */
-const snapState=()=>JSON.stringify({base,skus});
+const snapState=()=>JSON.stringify({base,skus,cats});
 function snapshot(){hist.push(snapState());if(hist.length>100)hist.shift();fut=[];queueSave()}
-function restore(s){const o=JSON.parse(s);base=o.base;skus=o.skus;if(cur>=skus.length)cur=0;render();queueSave()}
+function restore(s){const o=JSON.parse(s);base=o.base;skus=o.skus;cats=o.cats||[];if(cur>=skus.length)cur=0;render();queueSave()}
 function undo(){if(!hist.length)return toast('Nothing to undo');fut.push(snapState());restore(hist.pop())}
 function redo(){if(!fut.length)return toast('Nothing to redo');hist.push(snapState());restore(fut.pop())}
 
@@ -424,6 +582,8 @@ function setProps(id,props){
   props=clone(props);
   const d=effMap[id];
   if(d&&d.slot==='name'&&'text' in props){skus[cur].name=props.text;delete props.text}
+  if(d&&d.slot==='cat'&&!applyAll&&('text' in props||'img' in props)){const c=catOf(skus[cur]);if(c){c.values[id]='text' in props?props.text:props.img;delete props.text;delete props.img}else if(!catWarned){catWarned=true;toast('This product has no category yet, so the change is for this product only. Set a category in Products.')}}
+  if(d&&d.slot==='pimg'&&'img' in props&&!applyAll){skus[cur].values=skus[cur].values||{};skus[cur].values[id]=props.img;delete props.img}
   if(d&&d.slot==='text'&&'text' in props&&!applyAll){skus[cur].values=skus[cur].values||{};skus[cur].values[id]=props.text;delete props.text}
   if(!Object.keys(props).length)return;
   const ex=findIn(skus[cur].extras,id);
@@ -450,7 +610,8 @@ function openApply(scope){
   $('#scopeAllLbl').textContent='All changes on this product ('+changedIds().length+')';
   (applyScope==='sel'?$('#scopeSel'):$('#scopeAll')).checked=true;
   const thumbs=[...document.querySelectorAll('#strip .thumb img')];
-  $('#applySkus').innerHTML=skus.map((s,i)=>i===cur?'':`<label class="skuPick"><input type="checkbox" value="${i}">${thumbs[i]?`<img src="${thumbs[i].src}" alt="">`:''}<span>${esc(s.sku)}</span></label>`).join('');
+  catChips('#applyChips',id=>{$('#applySkus').querySelectorAll('input').forEach(i=>{if(skus[+i.value].cat===id)i.checked=true});$('#applyErr').textContent=''});
+  $('#applySkus').innerHTML=skus.map((s,i)=>i===cur?'':`<label class="skuPick" title="${esc(s.sku)}${catOf(s)?' · '+esc(catOf(s).name):''}"><input type="checkbox" value="${i}">${thumbs[i]?`<img src="${thumbs[i].src}" alt="">`:''}<span>${esc(s.sku)}${catOf(s)?`<br><span class="muted"><span class="cdot" style="background:${catOf(s).color}"></span>${esc(catOf(s).name)}</span>`:''}</span></label>`).join('');
   $('#applyErr').textContent='';updateApplyList();$('#applyDlg').style.display='flex';
 }
 function closeApply(){$('#applyDlg').style.display='none'}
@@ -669,7 +830,7 @@ function fit(){const z=Math.min((stage.width()-60)/W,(stage.height()-60)/H);stag
 const typing=t=>/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
 function onKey(e){
   if(document.body.classList.contains('home')){if(e.key==='Escape')closeDialogs();return}
-  if(['askDlg','ncDlg','prodDlg'].some(x=>$('#'+x).style.display==='flex')){if(e.key==='Escape')closeDialogs();return}
+  if(['askDlg','ncDlg','prodDlg','bgDlg'].some(x=>$('#'+x).style.display==='flex')){if(e.key==='Escape')closeDialogs();return}
   if(e.key==='?'&&!typing(e.target)){e.preventDefault();openModal();return}
   if($('#modal').style.display==='flex'){if(e.key==='Escape')closeModal();return}
   if($('#exportDlg').style.display==='flex'){if(e.key==='Escape')closeExport();return}
@@ -717,7 +878,8 @@ function onKeyUp(e){
 /* ---------- panels ---------- */
 function renderTabs(){
   if(openDoc&&openDoc.kind==='layout'){$('#tabs').innerHTML='<div class="tab on">Layout preview</div>';return}
-  $('#tabs').innerHTML=skus.map((s,i)=>`<div class="tab${i===cur?' on':''}" data-i="${i}">${esc(s.sku)}${Object.keys(s.overrides).length||s.extras.length?'<span class="dot" title="Has its own changes"></span>':''}</div>`).join('');
+  renderCatSel();
+  $('#tabs').innerHTML=visIdx().map(i=>{const s=skus[i],c=catOf(s);return`<div class="tab${i===cur?' on':''}" data-i="${i}"${c?` style="box-shadow:inset 0 -3px 0 ${c.color}"`:''} title="${c?esc(c.name):'No category'}">${esc(s.sku)}${Object.keys(s.overrides).length||s.extras.length?'<span class="dot" title="Has its own changes"></span>':''}</div>`}).join('');
 }
 function renderBanner(){
   const b=$('#banner');
@@ -761,11 +923,15 @@ function renderProps(){
   if(d.type==='rect'||d.type==='ellipse')h+=`<div class="fld"><label>Fill</label><input type="color" data-p="fill" value="${/^#/.test(d.fill)?d.fill:'#ffffff'}"></div>`;
   if(d.type==='line')h+=`<div class="grid2"><div class="fld"><label>Colour</label><input type="color" data-p="stroke" value="${d.stroke||'#000000'}"></div><div class="fld"><label>Thickness</label><input type="number" data-p="strokeWidth" value="${d.strokeWidth||4}"></div></div>`;
   if(toolsOn)h+=fxHtml(d);
+  if(d.type==='image')h+=blendHtml(d);
   if(d.type==='image')h+=`<div class="fld"><label>${d.slot?'Product image (this product)':'Image'}</label><select data-p="img">${[...new Set([...Object.keys(ART),...Object.keys(assets),d.img].filter(Boolean))].map(k=>`<option value="${k}"${k===d.img?' selected':''}>${esc(assetNames[k]||k)}</option>`).join('')}</select></div>
     <button id="replBtn" style="width:100%;margin-bottom:8px">Replace with your image…</button>
     <button id="aiBgBtn" style="width:100%;margin-bottom:6px;background:#18181b;color:#fff;border-color:#18181b">${aiBusy?'Removing background…':'Remove background'}</button>
     <button id="plainBgBtn" style="width:100%;margin-bottom:10px">Remove plain background (fast)</button>`;
-  if((d.type==='text'||d.type==='image')&&!d.extra)h+=`<label class="chk" title="Each product gets its own ${d.type==='image'?'photo':'text'} in this layer"><input type="checkbox" id="slotChk"${d.slot?' checked':''}> Changes per product${d.slot==='name'?' (product name)':d.slot==='image'?' (product photo)':''}</label>`;
+  if((d.type==='text'||d.type==='image')&&!d.extra){let m=d.slot==='cat'?'cat':d.slot?'prod':'none';
+    if(d.slot==='pimg')m='pimg';
+    h+=`<div class="fld"><label>This layer is</label><select id="slotSel"><option value="none"${m==='none'?' selected':''}>Same on every product</option><option value="cat"${m==='cat'?' selected':''}>Changes per category</option><option value="prod"${m==='prod'?' selected':''}>Changes per product${d.slot==='name'?' (product name)':d.slot==='image'?' (product photo)':d.type==='image'?' (product photo)':''}</option>${d.type==='image'?`<option value="pimg"${m==='pimg'?' selected':''}>Changes per product (background or other image)</option>`:''}</select></div>`;
+    if(d.slot==='cat'&&!applyAll){const c=catOf(skus[cur]);h+=c?`<p class="muted" style="line-height:1.5"><span class="cdot" style="background:${c.color}"></span>Shared by the ${catCount(c.id)} product${catCount(c.id)===1?'':'s'} in <b>${esc(c.name)}</b>. Editing it changes them all.</p>`:`<p class="muted" style="line-height:1.5">This product has no category. Set one in <b>Products</b>.</p>`}}
   const ch=applicableFor([id]);
   if(d.extra)h+=`<p class="muted" style="line-height:1.5">This layer exists only on ${esc(skus[cur].sku)} so far.</p>`;
   if(ov)h+=`<p class="muted" style="line-height:1.5">${esc(skus[cur].sku)} has its own changes to this layer.</p>`;
@@ -775,9 +941,13 @@ function renderProps(){
 }
 const queueStrip=(()=>{let t;return()=>{clearTimeout(t);t=setTimeout(renderStrip,350)}})();
 function renderStrip(){
-  $('#strip').innerHTML=skus.map((s,i)=>{offLayer.destroyChildren();effective(i).forEach(d=>offLayer.add(build(d)));offLayer.draw();
+  let idx=visIdx();if(cats.length&&catFilter==='all')idx=[...idx].sort((a,b)=>catOrder(skus[a])-catOrder(skus[b])||a-b);let last=null,h='';
+  idx.forEach(i=>{const s=skus[i],c=catOf(s),g=c?c.id:'none';
+    if(cats.length&&g!==last){h+=`<div class="sgrp" style="border-color:${c?c.color:'#d4d4d8'}">${esc(c?c.name:'No category')}</div>`;last=g}
+    offLayer.destroyChildren();effective(i).forEach(d=>offLayer.add(build(d)));offLayer.draw();
     const url=off.toDataURL({pixelRatio:1,mimeType:'image/jpeg',quality:.85});
-    return`<div class="thumb${i===cur?' on':''}" data-i="${i}"><img src="${url}" alt="${esc(s.sku)}"><div>${esc(s.sku)}_1200x1200.jpg</div></div>`}).join('');
+    h+=`<div class="thumb${i===cur?' on':''}" data-i="${i}"><img src="${url}" alt="${esc(s.sku)}"><div>${esc(s.sku)}_1200x1200.jpg</div></div>`});
+  $('#strip').innerHTML=h;
 }
 
 /* ---------- adding your own images ---------- */
@@ -842,7 +1012,7 @@ async function aiRemoveBg(){
 function renderCtx(){const el=$('#ctx');if(!el)return;const id=sel.length===1?sel[0]:null,d=id&&effMap[id];
   if(!d||d.locked||!(tool==='move'||tool==='text')||curEdit||drag||toolDrag){el.style.display='none';return}
   const b=(c,l,pri,t)=>`<button data-c="${c}"${pri?' class="pri"':''} title="${t||l}">${l}</button>`;
-  el.innerHTML=d.type==='image'?b('aibg',aiBusy?'Removing background…':'✨ Remove background',1,'Cut out the subject with AI')+b('plainbg','Plain bg',0,'Remove a plain white or single-colour background (fast)')+b('replace','Replace',0,'Replace with your image')+'<span class="sep"></span>'+b('apply','Apply to…')
+  el.innerHTML=d.type==='image'&&(d.slot==='pimg'||d.fit==='cover')?b('bgs','Backgrounds…',1,'Upload and assign backgrounds')+'<span class="sep"></span>'+b('apply','Apply to…'):d.type==='image'?b('aibg',aiBusy?'Removing background…':'✨ Remove background',1,'Cut out the subject with AI')+b('plainbg','Plain bg',0,'Remove a plain white or single-colour background (fast)')+b('replace','Replace',0,'Replace with your image')+'<span class="sep"></span>'+b('apply','Apply to…')
     :b('apply','Apply to…',0,'Copy this layer’s changes to other products')+b('dup','Duplicate',0,'Duplicate (Ctrl+J)')+b('del','Delete',0,'Delete (Del)');
   el.style.display='flex';positionCtx()}
 function positionCtx(){const el=$('#ctx');if(!el||el.style.display==='none'||sel.length!==1)return;const n=nodeById(sel[0]);if(!n){el.style.display='none';return}
@@ -961,7 +1131,7 @@ function renderOpts(){
 /* geometry helpers */
 function isLockedUp(id){let q=id;while(q){if(effMap[q]&&effMap[q].locked)return true;q=parentOf[q]}return false}
 function targetAt(e){const t=e.target;if(t===stage||t.getLayer()!==content)return null;const n=lidNode(t);const id=n?n.getAttr('lid'):null;return id&&!isLockedUp(id)?id:null}
-function imgInfo(id){const g=nodeById(id);if(!g)return null;const im=g.findOne('Image');if(!im)return null;const src=im.image(),nw=src.naturalWidth||src.width,nh=src.naturalHeight||src.height;return{g,im,src,nw,nh,kx:nw/im.width(),ky:nh/im.height()}}
+function imgInfo(id){const g=nodeById(id);if(!g)return null;const im=g.findOne('Image');if(!im)return null;const src=IMG[im.getAttr('srcKey')]||im.image(),nw=src.naturalWidth||src.width,nh=src.naturalHeight||src.height;return{g,im,src,nw,nh,kx:nw/im.width(),ky:nh/im.height()}}
 function docToPx(info,p){const a=stage.getAbsoluteTransform().point(p),l=info.im.getAbsoluteTransform().copy().invert().point(a);return{x:l.x*info.kx,y:l.y*info.ky}}
 function pxToDoc(info,p){const a=info.im.getAbsoluteTransform().point({x:p.x/info.kx,y:p.y/info.ky});return stage.getAbsoluteTransform().copy().invert().point(a)}
 function blankSize(w,h){const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));return c}
@@ -1121,6 +1291,8 @@ let exSizes=SIZE_PRESETS.map(([w,h,l],i)=>({w,h,l,on:i===0})),exFmt='jpeg',dl=nu
 function openExport(){
   $('#exCurLbl').textContent='This product ('+skus[cur].sku+')';$('#exAllN').textContent=skus.length;
   const thumbs=[...document.querySelectorAll('#strip .thumb img')];
+  catChips('#exChips',id=>{document.querySelector('input[name=exP][value=pick]').checked=true;$('#exPick').querySelectorAll('input').forEach(i=>{i.checked=skus[+i.value].cat===id});updEx()});
+  $('#exChips').style.display=cats.length?'':'none';
   $('#exPick').innerHTML=skus.map((s,i)=>`<label class="skuPick"><input type="checkbox" value="${i}"${i===cur?' checked':''}>${thumbs[i]?`<img src="${thumbs[i].src}" alt="">`:''}<span>${esc(s.sku)}</span></label>`).join('');
   drawExSizes();updEx();$('#exErr').textContent='';$('#exportDlg').style.display='flex';
 }
@@ -1191,9 +1363,9 @@ function drawRuler(cv,horiz){
   if(cv.width!==w*dpr||cv.height!==h*dpr){cv.width=w*dpr;cv.height=h*dpr}
   const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
   const sc=stage.scaleX(),off=horiz?stage.x():stage.y(),len=horiz?w:h,step=stepFor(sc),minor=step/5;
-  g.fillStyle='#e0ecff';const a=off,b=off+(horiz?W:H)*sc;
+  g.fillStyle='#45484d';const a=off,b=off+(horiz?W:H)*sc;
   if(horiz)g.fillRect(a,0,b-a,h);else g.fillRect(0,a,w,b-a);
-  g.strokeStyle='#a1a1aa';g.fillStyle='#52525b';g.font='10px system-ui,sans-serif';g.lineWidth=1;g.beginPath();
+  g.strokeStyle='#7a7a7a';g.fillStyle='#bdbdbd';g.font='10px Inter,system-ui,sans-serif';g.lineWidth=1;g.beginPath();
   const start=Math.floor(-off/sc/minor)*minor,end=(len-off)/sc;
   for(let v=start;v<=end;v+=minor){const px=Math.round(off+v*sc)+.5,major=Math.abs(v/step-Math.round(v/step))<1e-6,t=major?20:6;
     if(horiz){g.moveTo(px,20);g.lineTo(px,20-t)}else{g.moveTo(20,px);g.lineTo(20-t,px)}
@@ -1225,23 +1397,29 @@ function blankSku(name,img){return{sku:name,name,img:img||'washer',values:{},ove
 function starterLayout(){return[{id:'bg',name:'Background',type:'rect',x:0,y:0,width:W,height:H,fill:'#ffffff',locked:true},
   {id:uid(),name:'Product name',type:'text',slot:'name',x:100,y:70,width:1000,height:140,text:'',fontSize:64,fontStyle:'800',fill:'#141414',align:'center',lineHeight:1.1,autoFit:true},
   {id:uid(),name:'Product image',type:'image',slot:'image',x:150,y:260,width:900,height:820}]}
-function thumbFor(b,s){try{offLayer.destroyChildren();effectiveOf(b,s).forEach(d=>offLayer.add(build(d)));offLayer.draw();return off.toDataURL({pixelRatio:1,mimeType:'image/jpeg',quality:.8})}catch(e){return''}}
+function thumbFor(b,s,cs){try{offLayer.destroyChildren();effectiveOf(b,s,cs||[]).forEach(d=>offLayer.add(build(d)));offLayer.draw();return off.toDataURL({pixelRatio:1,mimeType:'image/jpeg',quality:.8})}catch(e){return''}}
 function seedStore(){
   store.layouts.push({id:'lay_sample',name:'11.11 Template (sample)',base:clone(SAMPLE_BASE),sampleName:'Product name here',sampleImg:'washer',updatedAt:now()});
-  store.campaigns.push({id:'camp_sample',name:'11.11 OE (sample)',layoutId:'lay_sample',base:clone(SAMPLE_BASE),skus:clone(SAMPLE_SKUS).map(s=>({values:{},...s})),updatedAt:now()});
+  const sb=clone(SAMPLE_BASE);['f1T','f2T','f3T'].forEach(id=>{const f=findIn(sb,id);if(f)f.d.slot='cat'});
+  const mk=(id,name,color,a,b2,c3)=>({id,name,color,values:{f1T:a,f2T:b2,f3T:c3}});
+  const sc=[mk('cat_lap','Laptops','#2563eb','Intel Core\nUltra 7','Anti-Glare\nIPS','Only\n1.2 kg'),mk('cat_mon','Monitors','#7c3aed','QHD\n180Hz','1ms\nResponse','HDR10'),
+    mk('cat_wm','Washers','#16a34a','AI Direct\nDrive','Steam\nHygiene','8.5 kg\nCapacity'),mk('cat_mw','Microwaves','#d97706','Smart\nInverter','Even\nHeating','25L\nCapacity')];
+  const sk=clone(SAMPLE_SKUS).map(s=>({values:{},...s}));['cat_lap','cat_lap','cat_mon','cat_wm','cat_mw'].forEach((c,i)=>{if(sk[i])sk[i].cat=c});
+  store.layouts[0].base=clone(sb);
+  store.campaigns.push({id:'camp_sample',name:'11.11 OE (sample)',layoutId:'lay_sample',base:sb,skus:sk,categories:sc,updatedAt:now()});
   if(legacyWork&&legacyWork.base){Object.assign(assets,legacyWork.assets||{});Object.assign(assetNames,legacyWork.assetNames||{});
     store.campaigns.unshift({id:'camp_'+uid(),name:'My earlier work',layoutId:'lay_sample',base:legacyWork.base,skus:legacyWork.skus.map(s=>({values:{},...s})),updatedAt:now()})}
 }
 async function loadStore(){let rec=null;try{rec=await idbReq('readonly',st=>st.get('main'),'kv')}catch(e){storageOk=false}
   if(rec&&rec.layouts){store={layouts:rec.layouts,campaigns:rec.campaigns};Object.assign(assets,rec.assets||{});Object.assign(assetNames,rec.assetNames||{})}else seedStore()}
 function commitOpen(){if(!openDoc)return;
-  if(openDoc.kind==='campaign'){const c=store.campaigns.find(x=>x.id===openDoc.id);if(c){c.base=base;c.skus=skus;c.updatedAt=now();c.thumb=thumbFor(base,skus[0])}}
+  if(openDoc.kind==='campaign'){const c=store.campaigns.find(x=>x.id===openDoc.id);if(c){c.base=base;c.skus=skus;c.categories=cats;c.updatedAt=now();c.thumb=thumbFor(base,skus[0],cats)}}
   else{const l=store.layouts.find(x=>x.id===openDoc.id);if(l){const s0=skus[0];
     if(s0.extras.length){base.push(...s0.extras.map(e=>{delete e.extra;return e}));s0.extras=[]}
     Object.entries(s0.overrides).forEach(([id,o])=>{const f=findIn(base,id);if(f)Object.assign(f.d,o)});s0.overrides={};
     l.base=base;l.sampleName=s0.name;l.sampleImg=s0.img;l.updatedAt=now();l.thumb=thumbFor(base,s0)}}}
 function usedAssetKeys(){const keys=new Set();const scan=arr=>walk(arr,d=>{if(d.img)keys.add(d.img)});
-  store.layouts.forEach(l=>{scan(l.base);keys.add(l.sampleImg)});store.campaigns.forEach(c=>{scan(c.base);c.skus.forEach(s=>{keys.add(s.img);scan(s.extras);Object.values(s.overrides).forEach(o=>{if(o.img)keys.add(o.img);if(o.children)scan(o.children)})})});return keys}
+  store.layouts.forEach(l=>{scan(l.base);keys.add(l.sampleImg)});store.campaigns.forEach(c=>{scan(c.base);(c.categories||[]).forEach(ct=>Object.values(ct.values||{}).forEach(v=>{if(typeof v==='string')keys.add(v)}));c.skus.forEach(s=>{keys.add(s.img);Object.values(s.values||{}).forEach(v=>{if(typeof v==='string')keys.add(v)});scan(s.extras);Object.values(s.overrides).forEach(o=>{if(o.img)keys.add(o.img);if(o.children)scan(o.children)})})});return keys}
 async function persistNow(loud){clearTimeout(saveT);saveT=null;commitOpen();
   const keys=usedAssetKeys(),out={};keys.forEach(k=>{if(!k||ART[k])return;if(!assets[k]&&IMG[k]&&IMG[k].toDataURL)try{assets[k]=IMG[k].toDataURL()}catch(e){}if(assets[k])out[k]=assets[k]});
   const names={};Object.keys(out).forEach(k=>names[k]=assetNames[k]);
@@ -1253,14 +1431,14 @@ function showHome(){if(openDoc){commitOpen();persistNow(false)}openDoc=null;appl
 function card(img,name,meta,acts,openAct){return`<div class="card"><div class="th" data-act="${openAct}">${img?`<img src="${img}" alt="">`:'<span class="muted">No preview</span>'}</div><div class="bd"><div class="nm2" title="${esc(name)}">${esc(name)}</div><div class="muted" style="font-size:12px">${meta}</div><div class="acts">${acts}</div></div></div>`}
 function renderHome(){
   const cs=[...store.campaigns].sort((a,b)=>b.updatedAt-a.updatedAt),ls=[...store.layouts].sort((a,b)=>b.updatedAt-a.updatedAt);
-  $('#campGrid').innerHTML=cs.length?cs.map(c=>{if(!c.thumb)c.thumb=thumbFor(c.base,c.skus[0]);return`<div data-id="${c.id}" data-kind="c">`+card(c.thumb,c.name,`${c.skus.length} product${c.skus.length===1?'':'s'} · ${fmtDate(c.updatedAt)}`,
+  $('#campGrid').innerHTML=cs.length?cs.map(c=>{if(!c.thumb)c.thumb=thumbFor(c.base,c.skus[0],c.categories);return`<div data-id="${c.id}" data-kind="c">`+card(c.thumb,c.name,`${c.skus.length} product${c.skus.length===1?'':'s'} · ${fmtDate(c.updatedAt)}`,
     '<button data-act="open" class="pri">Open</button><button data-act="dup">Duplicate</button><button data-act="ren">Rename</button><button data-act="del">Delete</button>','open')+'</div>'}).join(''):'<div class="empty" style="grid-column:1/-1">No campaigns yet. Click <b>+ New campaign</b> to start one from a layout.</div>';
   $('#layGrid').innerHTML=ls.length?ls.map(l=>{if(!l.thumb)l.thumb=thumbFor(l.base,blankSku(l.sampleName||'Product name',l.sampleImg));return`<div data-id="${l.id}" data-kind="l">`+card(l.thumb,l.name,'Updated '+fmtDate(l.updatedAt),
     '<button data-act="newc" class="pri">New campaign</button><button data-act="edit">Edit</button><button data-act="dup">Duplicate</button><button data-act="ren">Rename</button><button data-act="del">Delete</button>','edit')+'</div>'}).join(''):'<div class="empty" style="grid-column:1/-1">No layouts yet. Click <b>+ New layout</b>.</div>';
 }
 function openEditor(kind,id){
   const rec=kind==='campaign'?store.campaigns.find(x=>x.id===id):store.layouts.find(x=>x.id===id);if(!rec)return;
-  openDoc={kind,id};base=rec.base;skus=kind==='campaign'?rec.skus:[blankSku(rec.sampleName||'Product name here',rec.sampleImg||'washer')];
+  openDoc={kind,id};cats=kind==='campaign'?(rec.categories=rec.categories||[]):[];catFilter='all';catWarned=false;base=rec.base;skus=kind==='campaign'?rec.skus:[blankSku(rec.sampleName||'Product name here',rec.sampleImg||'washer')];
   skus.forEach(s=>{s.values=s.values||{};s.overrides=s.overrides||{};s.extras=s.extras||[]});
   if(!skus.length)skus.push(blankSku('SKU-1'));
   applyAll=kind==='layout';cur=0;sel=[];hist=[];fut=[];pixSel=null;cancelCrop(true);
@@ -1273,7 +1451,7 @@ let askCb=null;
 function ask(title,text,val,okLabel,cb,danger){$('#askTitle').textContent=title;$('#askText').textContent=text||'';const i=$('#askIn');i.style.display=val==null?'none':'block';i.value=val||'';$('#askErr').textContent='';
   const y=$('#askYes');y.textContent=okLabel||'OK';y.style.background=danger?'#b91c1c':'';askCb=cb;$('#askDlg').style.display='flex';if(val!=null)setTimeout(()=>{i.focus();i.select()},0)}
 function askOk(){const v=$('#askIn').value.trim();if($('#askIn').style.display!=='none'&&!v){$('#askErr').textContent='Enter a name.';return}const cb=askCb;$('#askDlg').style.display='none';askCb=null;cb&&cb(v)}
-function closeDialogs(){['askDlg','ncDlg','prodDlg'].forEach(x=>$('#'+x).style.display='none')}
+function closeDialogs(){['askDlg','ncDlg','prodDlg','bgDlg'].forEach(x=>$('#'+x).style.display='none')}
 function homeAction(kind,id,act){
   const list=kind==='c'?store.campaigns:store.layouts,rec=list.find(x=>x.id===id);if(!rec)return;
   if(act==='open')return openEditor('campaign',id);if(act==='edit')return openEditor('layout',id);
@@ -1288,8 +1466,12 @@ function openNewCampaign(layId){
   if(!store.layouts.length)return toast('Create a layout first.');
   ncLayout=layId||ncLayout||store.layouts[0].id;if(!store.layouts.some(l=>l.id===ncLayout))ncLayout=store.layouts[0].id;
   $('#ncLayouts').innerHTML=store.layouts.map(l=>`<label class="${l.id===ncLayout?'on':''}" data-lid="${l.id}"><img src="${l.thumb||thumbFor(l.base,blankSku(l.sampleName||'',l.sampleImg))}" alt="">${esc(l.name)}</label>`).join('');
+  const sameLay=[...store.campaigns].filter(c=>(c.categories||[]).length).sort((a,b)=>b.updatedAt-a.updatedAt);
+  $('#ncCopy').innerHTML='<option value="">Don’t copy</option>'+sameLay.map(c=>`<option value="${c.id}">${esc(c.name)} (${c.categories.length})</option>`).join('');const pre=sameLay.find(c=>c.layoutId===ncLayout);$('#ncCopy').value=pre?pre.id:'';ncCatList();
+  $('#ncCat').value='';
   $('#ncName').value='New campaign';$('#ncSheet').value='';$('#ncPhotos').value='';$('#ncPhotoN').textContent='';$('#ncErr').textContent='';ncUpd();$('#ncDlg').style.display='flex';setTimeout(()=>{$('#ncName').focus();$('#ncName').select()},0)}
-function ncUpd(){const m=document.querySelector('input[name=ncStart]:checked').value;$('#ncFiles').style.display=m==='empty'?'none':'block';$('#ncSheetRow').style.display=m==='sheet'?'block':'none';
+function ncCatList(){const src=store.campaigns.find(c=>c.id===$('#ncCopy').value);fillCatDatalist('#ncCatList',src?src.categories:[])}
+function ncUpd(){$('#ncCatRow').style.visibility=document.querySelector('input[name=ncStart]:checked').value==='photos'?'visible':'hidden';const m=document.querySelector('input[name=ncStart]:checked').value;$('#ncFiles').style.display=m==='empty'?'none':'block';$('#ncSheetRow').style.display=m==='sheet'?'block':'none';
   $('#ncPhotoRow').firstChild.textContent=m==='sheet'?'Photos (optional, matched by file name or SKU): ':'Photos: '}
 async function ncCreate(){
   const name=$('#ncName').value.trim(),m=document.querySelector('input[name=ncStart]:checked').value,lay=store.layouts.find(l=>l.id===ncLayout);
@@ -1298,11 +1480,12 @@ async function ncCreate(){
   if(m==='photos'&&!photos.length){$('#ncErr').textContent='Pick one or more product photos, or choose Empty.';return}
   if(m==='sheet'&&!sheet){$('#ncErr').textContent='Pick a spreadsheet (Excel or CSV).';return}
   $('#ncGo').disabled=true;$('#ncErr').textContent='';
-  try{const b=clone(lay.base);let list=[];
+  try{const b=clone(lay.base);let list=[];const src=store.campaigns.find(c=>c.id===$('#ncCopy').value),cl=src?clone(src.categories||[]):[];
+    if(src){const ids=new Set();walk(b,d=>ids.add(d.id));catSlots(src.base).forEach(d=>{if(ids.has(d.id)){const f=findIn(b,d.id);if(f)f.d.slot='cat'}})}
     if(m==='empty')list=[blankSku('SKU-1',lay.sampleImg)];
-    else{const r=await importProducts(b,photos,m==='sheet'?sheet:null,lay.sampleImg);list=r.skus;if(r.note)toast(r.note)}
+    else{const r=await importProducts(b,photos,m==='sheet'?sheet:null,lay.sampleImg,m==='photos'?$('#ncCat').value:'',cl);list=r.skus;if(r.note)toast(r.note)}
     if(!list.length){$('#ncErr').textContent='No products found in that file. It needs a SKU column.';return}
-    const c={id:'camp_'+uid(),name,layoutId:lay.id,base:b,skus:list,updatedAt:now()};store.campaigns.push(c);closeDialogs();openEditor('campaign',c.id);persistNow(false)}
+    const c={id:'camp_'+uid(),name,layoutId:lay.id,base:b,skus:list,categories:cl,updatedAt:now()};store.campaigns.push(c);closeDialogs();openEditor('campaign',c.id);persistNow(false)}
   catch(e){$('#ncErr').textContent=e&&e.message?e.message:'Couldn’t read that file.'}
   finally{$('#ncGo').disabled=false}}
 /* product import */
@@ -1317,21 +1500,22 @@ async function readSheet(file){
   if(!window.XLSX){try{await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')}catch(e){throw new Error('Couldn’t load the Excel reader. Save the sheet as CSV and try again.')}}
   const wb=XLSX.read(await file.arrayBuffer(),{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]];return XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false})}
 function textSlots(b){const out=[];walk(b,d=>{if(d.slot==='text')out.push(d)});return out}
-async function importProducts(b,photos,sheet,fallbackImg){
-  const pm=await photoMap(photos||[]);let note='';
-  if(!sheet)return{skus:Object.entries(pm).map(([k,img])=>{const nm=assetNames[img]||k;return blankSku(nm,img)})};
+async function importProducts(b,photos,sheet,fallbackImg,catName,catList){
+  const pm=await photoMap(photos||[]);let note='';catList=catList||cats;
+  if(!sheet){const c=getOrCreateCat(catName,catList);return{skus:Object.entries(pm).map(([k,img])=>{const nm=assetNames[img]||k,s=blankSku(nm,img);if(c)s.cat=c.id;return s})}}
   const rows=await readSheet(sheet);if(rows.length<2)return{skus:[]};
   const hdr=rows[0].map(h=>String(h).toLowerCase().trim()),col=(...names)=>hdr.findIndex(h=>names.includes(h));
-  const cSku=col('sku','sku code','model','code','item'),cName=col('product name','name','title','product'),cImg=col('image file','image','photo','file','filename','image filename');
+  const cBg=col('background','background file','background image','bg','scene');
+  const cCat=col('category','categories','cat','type','product type'),cSku=col('sku','sku code','model','code','item'),cName=col('product name','name','title','product'),cImg=col('image file','image','photo','file','filename','image filename');
   if(cSku<0)throw new Error('The spreadsheet needs a column called SKU.');
   const slots=textSlots(b).map(d=>({d,c:hdr.indexOf(String(d.name).toLowerCase().trim())})).filter(x=>x.c>=0);
   let missing=0;const list=rows.slice(1).filter(r=>String(r[cSku]||'').trim()).map(r=>{const sku=String(r[cSku]).trim(),name=cName>=0&&String(r[cName]).trim()?String(r[cName]).trim():sku;
     const img=(cImg>=0&&pm[normKey(r[cImg])])||pm[normKey(sku)]||null;if(!img)missing++;
-    const s=blankSku(sku,img||fallbackImg);s.name=name;slots.forEach(({d,c})=>{if(String(r[c]).trim())s.values[d.id]=String(r[c])});return s});
+    const s=blankSku(sku,img||fallbackImg);s.name=name;{const c=getOrCreateCat(cCat>=0?r[cCat]:catName,catList);if(c)s.cat=c.id}if(cBg>=0&&String(r[cBg]).trim()){const bk=pm[normKey(r[cBg])];if(bk){const L=sceneLayer(b,true);s.values[L.id]=bk}}slots.forEach(({d,c})=>{if(String(r[c]).trim())s.values[d.id]=String(r[c])});return s});
   if(missing)note=`${missing} product${missing===1?' has':'s have'} no matching photo yet — use Products → Change photo, or add photos named like the SKU.`;
   return{skus:list,note}}
-function templateCSV(b){const slots=textSlots(b).map(d=>d.name);const head=['SKU','Product name','Image file',...slots];
-  const ex=[['14Z95U-White','14" Laptop Anti-Glare IPS Display - Silver','14Z95U-White.png',...slots.map(()=>'')],['FV1285S4W','8.5kg Front Load Washer with Steam','FV1285S4W.jpg',...slots.map(()=>'')]];
+function templateCSV(b){const slots=textSlots(b).map(d=>d.name);const head=['SKU','Product name','Category','Image file','Background file',...slots];
+  const ex=[['14Z95U-White','14" Laptop Anti-Glare IPS Display - Silver','Laptops','14Z95U-White.png','',...slots.map(()=>'')],['FV1285S4W','8.5kg Front Load Washer with Steam','Washers','FV1285S4W.jpg','laundry-room.jpg',...slots.map(()=>'')]];
   return[head,...ex].map(r=>r.map(v=>/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v).join(',')).join('\r\n')}
 function fallbackDl(){return{save:async({filename,data})=>{const u=URL.createObjectURL(data instanceof Blob?data:new Blob([data])),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);return{status:'saved'}}}}
 async function saveFile(name,blob){let d=dl;if(!d&&window.claude&&claude.use){try{d=await Promise.race([claude.use('downloads'),new Promise(r=>setTimeout(()=>r(null),3000))])}catch(e){}}
@@ -1339,16 +1523,80 @@ async function saveFile(name,blob){let d=dl;if(!d&&window.claude&&claude.use){tr
 function downloadTemplate(b){saveFile('em-tool-products-template.csv',new Blob(['﻿'+templateCSV(b)],{type:'text/csv'}))}
 /* products dialog */
 let changeIdx=-1;
-function openProducts(){renderProdList();$('#prodDlg').style.display='flex'}
+function openProducts(){fillCatDatalist('#prCatList');$('#catMgr').style.display='none';renderProdList();$('#prodDlg').style.display='flex'}
 function imgSrc(k){return ART[k]||assets[k]||(IMG[k]&&IMG[k].toDataURL?(()=>{try{return IMG[k].toDataURL()}catch(e){return''}})():'')}
-function renderProdList(){$('#prList').innerHTML=skus.map((s,i)=>`<div class="prow" data-i="${i}"><img src="${imgSrc(s.img)}" alt=""><input data-f="sku" value="${esc(s.sku)}" title="SKU"><input data-f="name" value="${esc(s.name)}" title="Product name"><button data-pa="photo">Change photo</button><button data-pa="del" title="Remove product">✕</button></div>`).join('')}
+function renderProdList(){$('#prList').innerHTML=skus.map((s,i)=>`<div class="prow" data-i="${i}"><img src="${imgSrc(s.img)}" alt=""><input data-f="sku" value="${esc(s.sku)}" title="SKU"><input data-f="name" value="${esc(s.name)}" title="Product name"><select data-f="cat" style="font:inherit;padding:4px;border:1px solid #d4d4d8;border-radius:6px;min-width:0">${catOptions(s.cat)}</select><button data-pa="photo">Change photo</button><button data-pa="del" title="Remove product">✕</button></div>`).join('')}
 async function addProducts(list){if(!list.length)return toast('No products found.');snapshot();skus.push(...list);cur=skus.length-list.length;sel=[];render();renderStrip();renderProdList();toast(`Added ${list.length} product${list.length===1?'':'s'}`)}
 
-function setSlot(id,on){const f=findIn(base,id);if(!f)return toast('Only layout layers can change per product.');const d=f.d,e=effMap[id];snapshot();
+function setSlot(id,mode){const f=findIn(base,id);if(!f)return toast('Only layout layers can change per product.');const d=f.d,e=effMap[id];const on=mode!=='none';snapshot();
+  if(mode==='pimg'){if(d.slot==='image')d.img=e.img;d.slot='pimg';skus.forEach(s=>{s.values=s.values||{};if(s.values[id]==null&&e.img)s.values[id]=e.img});toast('Each product can now have its own image here, for example a background. Use Backgrounds… to fill it.');render();renderStrip();return}
+  if(mode==='cat'){const v=d.type==='image'?e.img:e.text;if(d.slot==='image')d.img=e.img;if(d.slot==='name'||d.slot==='text')d.text=e.text;d.slot='cat';cats.forEach(c=>{if(c.values[id]==null)c.values[id]=v});
+    toast(cats.length?'Each category now has its own version of this layer':'Now create categories in Products, then each one can have its own version');render();renderStrip();return}
+  if(d.slot==='cat'||d.slot==='pimg'){if(d.slot==='pimg'&&d.type==='image')d.img=e.img;delete d.slot}
   if(!on){if(d.slot==='image')d.img=e.img;else d.text=e.text;delete d.slot;toast('This layer is now the same on every product')}
   else if(d.type==='image'){walk(base,x=>{if(x.slot==='image'){x.img=x.img||skus[cur].img;delete x.slot}});d.slot='image';toast('Each product now shows its own photo here')}
   else{let hasName=false;walk(base,x=>{if(x.slot==='name')hasName=true});d.slot=hasName?'text':'name';if(d.slot==='text')skus.forEach(s=>{s.values=s.values||{};if(s.values[id]==null)s.values[id]=d.text});toast(d.slot==='name'?'This text is now the product name':'Each product can now have its own text here')}
   render();renderStrip()}
+
+/* ---------- backgrounds (scene layer, mass upload, assignment) ---------- */
+let bgPool=[],bgPick=null;
+function bgLayers(){const out=[];walk(base,d=>{if(d.type==='image'&&(d.slot==='pimg'||d.slot==='cat'))out.push(d)});return out}
+function sceneLayer(b,create){let L=null;walk(b,d=>{if(!L&&d.type==='image'&&d.slot==='pimg')L=d});if(L||!create)return L;
+  const card=findIn(b,'card');const box=card&&card.arr===b?card.d:null;
+  L={id:'scene_'+uid(),name:'Scene background',type:'image',slot:'pimg',fit:'cover',x:box?box.x:0,y:box?box.y:0,width:box?box.width:W,height:box?box.height:H,cornerRadius:box?(box.cornerRadius||0):0};
+  const idx=card&&card.arr===b?card.i+1:(b[0]&&b[0].locked?1:0);b.splice(idx,0,L);return L}
+function blendHtml(d){if(d.slot==='pimg'||d.fit==='cover')return`<button id="bgOpen" style="width:100%;margin-bottom:10px">Backgrounds… (upload many, assign to products)</button>`;
+  const bl=d.blend||{},r=(k,l,max,u)=>`<div class="fld"><label>${l} <span>${bl[k]||0}</span>${u||''}</label><input type="range" min="0" max="${max}" step="1" data-bl="${k}" value="${bl[k]||0}"></div>`;
+  return`<div class="sec" style="margin-top:4px">Blend with background</div>${r('shadow','Shadow',100)}${r('match','Colour match',100)}${r('soften','Soften edges',20,' px')}${!applyAll&&!d.extra&&d.blend?'<button id="blAll" style="width:100%;margin-bottom:10px">Use this blend on all products</button>':''}`}
+function openBackgrounds(layerId){
+  if(!openDoc||openDoc.kind!=='campaign')return toast('Open a campaign to assign backgrounds.');
+  const seen=new Set(bgPool);skus.forEach(s=>Object.values(s.values||{}).forEach(v=>{if(typeof v==='string'&&IMG[v]&&!seen.has(v)){const L=bgLayers().map(x=>x.id);if(Object.entries(s.values).some(([k,val])=>val===v&&L.includes(k))){seen.add(v);bgPool.push(v)}}}));
+  renderBgDlg(layerId);$('#bgDlg').style.display='flex'}
+function renderBgDlg(layerId){const ls=bgLayers();
+  $('#bgLayer').innerHTML=ls.length?ls.map(l=>`<option value="${l.id}">${esc(l.name)}${l.slot==='cat'?' (per category)':''}</option>`).join(''):'<option value="">No background layer yet — click Add scene background layer</option>';
+  if(layerId&&ls.some(l=>l.id===layerId))$('#bgLayer').value=layerId;
+  $('#bgTiles').innerHTML=bgPool.length?bgPool.map(k=>`<div data-bk="${k}" title="${esc(assetNames[k]||'')}" style="cursor:pointer;border:2px solid ${k===bgPick?'#1473e6':'#3d3d3d'};border-radius:8px;padding:3px;font-size:11px;text-align:center"><img src="${imgSrc(k)}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:5px;display:block"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(assetNames[k]||'background')}</div></div>`).join(''):'<div class="empty" style="grid-column:1/-1;padding:16px">Upload one or many background images. Then pick one and choose where it goes.</div>';
+  $('#bgCurSku').textContent=skus[cur].sku;$('#bgCat').innerHTML=cats.map(c=>`<option value="${c.id}">${esc(c.name)} (${catCount(c.id)})</option>`).join('');$('#bgCatRow').style.display=cats.length?'':'none';$('#bgErr').textContent=''}
+function setBgFor(i,L,key){const s=skus[i];if(L.slot==='cat'){const c=catOf(s);if(c){if(key)c.values[L.id]=key;else delete c.values[L.id]}return}s.values=s.values||{};if(key)s.values[L.id]=key;else delete s.values[L.id]}
+function applyBackgrounds(){const L=findIn(base,$('#bgLayer').value);if(!L){$('#bgErr').textContent='Add a scene background layer first.';return}const layer=L.d,mode=document.querySelector('input[name=bgMode]:checked').value;
+  const need=['cur','cat','all'].includes(mode);if(need&&!bgPick){$('#bgErr').textContent='Click a background to select it first.';return}
+  if((mode==='match'||mode==='spread')&&!bgPool.length){$('#bgErr').textContent='Upload some backgrounds first.';return}
+  snapshot();let n=0;
+  if(mode==='cur'){setBgFor(cur,layer,bgPick);n=1}
+  else if(mode==='cat'){const id=$('#bgCat').value;skus.forEach((s,i)=>{if(s.cat===id){setBgFor(i,layer,bgPick);n++}})}
+  else if(mode==='all'){skus.forEach((s,i)=>{setBgFor(i,layer,bgPick);n++})}
+  else if(mode==='spread'){skus.forEach((s,i)=>{setBgFor(i,layer,bgPool[i%bgPool.length]);n++})}
+  else if(mode==='clear'){setBgFor(cur,layer,null);n=1}
+  else if(mode==='match'){skus.forEach((s,i)=>{const sk=normKey(s.sku);if(!sk)return;const k=bgPool.find(k=>normKey(assetNames[k]||'').includes(sk));if(k){setBgFor(i,layer,k);n++}});if(!n){hist.pop();$('#bgErr').textContent='No file names contain a SKU. Name them like FV1285S4W_kitchen.jpg.';return}}
+  render();renderStrip();toast(mode==='clear'?'Background removed from '+skus[cur].sku:`Background set on ${n} product${n===1?'':'s'}`)}
+
+/* ---------- categories ---------- */
+let cats=[],catFilter='all',catWarned=false;
+const CAT_COLORS=['#2563eb','#16a34a','#d97706','#db2777','#7c3aed','#0891b2','#dc2626','#65a30d','#9333ea','#0d9488'];
+const catById=id=>cats.find(c=>c.id===id),catOf=s=>s&&s.cat?catById(s.cat):null,catCount=id=>skus.filter(s=>s.cat===id).length;
+const catOrder=s=>{const i=cats.findIndex(c=>c.id===s.cat);return i<0?1e6:i};
+function visIdx(){const all=skus.map((s,i)=>i);if(catFilter==='all')return all;return all.filter(i=>catFilter==='none'?!catOf(skus[i]):skus[i].cat===catFilter)}
+function catSlots(b){const out=[];walk(b||base,d=>{if(d.slot==='cat')out.push(d)});return out}
+function getOrCreateCat(name,list){name=String(name||'').trim();if(!name)return null;list=list||cats;
+  let c=list.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(!c){c={id:'cat_'+uid(),name,color:CAT_COLORS[list.length%CAT_COLORS.length],values:{}};
+    list.push(c)}
+  return c}
+function renderCatSel(){const el=$('#catSel');if(!el)return;if(!openDoc||openDoc.kind!=='campaign'){el.innerHTML='';return}
+  const none=skus.filter(s=>!catOf(s)).length;
+  el.innerHTML=`<option value="all">All products (${skus.length})</option>`+cats.map(c=>`<option value="${c.id}"${catFilter===c.id?' selected':''}>${esc(c.name)} (${catCount(c.id)})</option>`).join('')+(cats.length&&none?`<option value="none"${catFilter==='none'?' selected':''}>No category (${none})</option>`:'');
+  if(catFilter==='all')el.value='all';el.style.display=cats.length?'':'none'}
+function setCatFilter(v){catFilter=v;const vis=visIdx();if(vis.length&&!vis.includes(cur)){cur=vis[0];sel=[]}render();renderStrip()}
+function catChips(container,onPick){const el=$(container);if(!cats.length){el.innerHTML='';return}
+  el.innerHTML='Select category: '+cats.map(c=>`<button data-cat="${c.id}"><span class="cdot" style="background:${c.color}"></span>${esc(c.name)} (${catCount(c.id)})</button>`).join('');
+  el.onclick=e=>{const b=e.target.closest('[data-cat]');if(b)onPick(b.dataset.cat)}}
+function renderCatMgr(){const el=$('#catMgr');
+  el.innerHTML=`<b>Categories</b><p class="muted" style="margin:4px 0 8px;line-height:1.5">Layers set to "Changes per category" (for example the feature pills) have one version per category. Edit them on any product in the category.</p>`+
+    (cats.length?cats.map(c=>`<div class="catrow"><span class="cdot" style="background:${c.color}"></span><span style="flex:1">${esc(c.name)} <span class="muted">· ${catCount(c.id)} product${catCount(c.id)===1?'':'s'}</span></span><button data-cm="ren" data-id="${c.id}">Rename</button><button data-cm="del" data-id="${c.id}">Delete</button></div>`).join(''):'<p class="muted">No categories yet.</p>')+
+    `<div class="catrow" style="margin-top:6px"><input id="newCatName" placeholder="New category name" style="flex:1;font:inherit;padding:4px 6px;border:1px solid #d4d4d8;border-radius:6px"><button data-cm="add">Add category</button></div>`+
+    (catSlots().length?'':'<p class="muted" style="margin:6px 0 0;line-height:1.5">Tip: select a layer, like a feature pill text, and set <b>This layer is → Changes per category</b>.</p>')}
+function catOptions(sel){return`<option value="">No category</option>`+cats.map(c=>`<option value="${c.id}"${c.id===sel?' selected':''}>${esc(c.name)}</option>`).join('')+'<option value="__new">New category…</option>'}
+function fillCatDatalist(id,list){$(id).innerHTML=(list||cats).map(c=>`<option value="${esc(c.name)}">`).join('')}
 
 /* ---------- misc ---------- */
 let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600)}
@@ -1408,22 +1656,40 @@ function wire(){
   $('#prodBtn').onclick=openProducts;$('#prClose').onclick=()=>{$('#prodDlg').style.display='none';render();renderStrip()};
   $('#prodDlg').addEventListener('click',e=>{if(e.target.id==='prodDlg'){$('#prodDlg').style.display='none';render();renderStrip()}});
   $('#prPhotos').onclick=()=>{$('#prPhotoIn').value='';$('#prPhotoIn').click()};
-  $('#prPhotoIn').onchange=async e=>{const r=await importProducts(base,[...e.target.files],null,skus[0]&&skus[0].img);addProducts(r.skus)};
+  $('#prPhotoIn').onchange=async e=>{snapshot();const r=await importProducts(base,[...e.target.files],null,skus[0]&&skus[0].img,$('#prCat').value);hist.pop();addProducts(r.skus);fillCatDatalist('#prCatList')};
   $('#prSheet').onclick=()=>{$('#prSheetIn').value='';$('#prSheetIn').click()};
   $('#prSheetIn').onchange=e=>{if(!e.target.files[0])return;toast('Now pick the product photos for this sheet (or Cancel to skip).');$('#prSheetPhotos').value='';
-    const go=async(ph)=>{try{const r=await importProducts(base,ph,$('#prSheetIn').files[0],skus[0]&&skus[0].img);await addProducts(r.skus);if(r.note)toast(r.note)}catch(err){toast(err&&err.message?err.message:'Couldn’t read that spreadsheet.')}};
+    const go=async(ph)=>{try{const r=await importProducts(base,ph,$('#prSheetIn').files[0],skus[0]&&skus[0].img,$('#prCat').value);await addProducts(r.skus);if(r.note)toast(r.note)}catch(err){toast(err&&err.message?err.message:'Couldn’t read that spreadsheet.')}};
     let done=false;$('#prSheetPhotos').onchange=ev=>{if(done)return;done=true;go([...ev.target.files])};
     window.addEventListener('focus',function f(){window.removeEventListener('focus',f);setTimeout(()=>{if(!done&&!$('#prSheetPhotos').files.length){done=true;go([])}},700)});
     $('#prSheetPhotos').click()};
   $('#prTpl').onclick=()=>downloadTemplate(base);
-  $('#prList').addEventListener('change',e=>{const r=e.target.closest('.prow');if(!r)return;const s=skus[+r.dataset.i],f=e.target.dataset.f,v=e.target.value.trim();if(!v){renderProdList();return}snapshot();s[f]=v;render()});
+  $('#prList').addEventListener('change',e=>{const r=e.target.closest('.prow');if(!r)return;const s=skus[+r.dataset.i],f=e.target.dataset.f,v=e.target.value.trim();
+    if(f==='cat'){if(v==='__new'){ask('New category','For example Washers, TVs or Laptops.','','Create',nm=>{snapshot();const c=getOrCreateCat(nm);s.cat=c.id;render();renderStrip();renderProdList();fillCatDatalist('#prCatList');if($('#catMgr').style.display==='block')renderCatMgr()});renderProdList();return}
+      snapshot();if(v)s.cat=v;else delete s.cat;render();renderStrip();if($('#catMgr').style.display==='block')renderCatMgr();return}
+    if(!v){renderProdList();return}snapshot();s[f]=v;render()});
+  $('#prBgs').onclick=()=>{$('#prodDlg').style.display='none';openBackgrounds()};
+  $('#bgClose').onclick=()=>{$('#bgDlg').style.display='none'};$('#bgDlg').addEventListener('click',e=>{if(e.target.id==='bgDlg')$('#bgDlg').style.display='none'});
+  $('#bgUpload').onclick=()=>{$('#bgFileIn').value='';$('#bgFileIn').click()};
+  $('#bgFileIn').onchange=async e=>{const fs=[...e.target.files];let k=null;for(const f of fs){try{k=await readImage(f);bgPool.push(k)}catch(err){}}if(k&&!bgPick)bgPick=bgPool[bgPool.length-fs.length]||k;renderBgDlg($('#bgLayer').value);toast(`${fs.length} background${fs.length===1?'':'s'} uploaded`)};
+  $('#bgTiles').addEventListener('click',e=>{const t=e.target.closest('[data-bk]');if(!t)return;bgPick=t.dataset.bk;renderBgDlg($('#bgLayer').value)});
+  $('#bgAddLayer').onclick=()=>{snapshot();const L=sceneLayer(base,true);render();renderBgDlg(L.id);toast('Scene background layer added behind the product')};
+  $('#bgGo').onclick=applyBackgrounds;
+  $('#prCats').onclick=()=>{const m=$('#catMgr');m.style.display=m.style.display==='block'?'none':'block';renderCatMgr()};
+  $('#catMgr').addEventListener('click',e=>{const b=e.target.closest('[data-cm]');if(!b)return;const a=b.dataset.cm,c=catById(b.dataset.id);
+    if(a==='add'){const nm=$('#newCatName').value.trim();if(!nm)return toast('Type a category name first.');snapshot();getOrCreateCat(nm);renderCatMgr();renderProdList();fillCatDatalist('#prCatList');render();return}
+    if(a==='ren'&&c)ask('Rename category','',c.name,'Rename',nm=>{snapshot();c.name=nm;renderCatMgr();renderProdList();render();renderStrip()});
+    if(a==='del'&&c)ask('Delete category "'+c.name+'"?','Its products stay, without a category, and show the layout’s default text for per-category layers.',null,'Delete',()=>{snapshot();cats.splice(cats.indexOf(c),1);skus.forEach(s=>{if(s.cat===c.id)delete s.cat});if(catFilter===c.id)catFilter='all';renderCatMgr();renderProdList();render();renderStrip()},true)});
+  $('#newCatName')&&0;
+  $('#catSel').onchange=e=>{setCatFilter(e.target.value);e.target.blur()};
+  $('#ncCopy').onchange=ncCatList;
   $('#prList').addEventListener('click',e=>{const b=e.target.closest('[data-pa]');if(!b)return;const i=+b.closest('.prow').dataset.i;
     if(b.dataset.pa==='del'){if(skus.length<2)return toast('A campaign needs at least one product.');snapshot();skus.splice(i,1);if(cur>=skus.length)cur=skus.length-1;sel=[];render();renderStrip();renderProdList();return}
     changeIdx=i;$('#prChangeIn').value='';$('#prChangeIn').click()});
   $('#prChangeIn').onchange=async e=>{const f=e.target.files[0];if(!f||changeIdx<0)return;try{const k=await readImage(f);snapshot();skus[changeIdx].img=k;render();renderStrip();renderProdList()}catch(err){toast('That file is not an image.')}};
   $('#ctx').addEventListener('mousedown',e=>e.stopPropagation());
   $('#ctx').addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(!c)return;c.blur();const a=c.dataset.c;
-    if(a==='aibg')aiRemoveBg();else if(a==='plainbg')removeBg();else if(a==='replace'){$('#replIn').value='';$('#replIn').click()}
+    if(a==='bgs')openBackgrounds(sel[0]);else if(a==='aibg')aiRemoveBg();else if(a==='plainbg')removeBg();else if(a==='replace'){$('#replIn').value='';$('#replIn').click()}
     else if(a==='apply')openApply('sel');else if(a==='dup'){snapshot();duplicateSel()}else if(a==='del')deleteSel()});
   $('#opts').addEventListener('change',e=>{const k=e.target.dataset.tx;if(!k)return;let v=e.target.value;
     if(k==='fontFamily'&&v==='__upload'){$('#fontIn').value='';$('#fontIn').click();renderOpts();return}
@@ -1472,13 +1738,14 @@ function wire(){
     else sel=[id];
     renderSel()});
   $('#props').addEventListener('input',e=>{if(e.target.type==='range'&&e.target.dataset.fx){const sp=e.target.parentElement.querySelector('label span');if(sp)sp.textContent=e.target.value}});
-  $('#props').addEventListener('change',e=>{if(e.target.id==='slotChk')return;if(e.target.dataset.fx&&sel[0]){changeFx(e.target);return}const p=e.target.dataset.p;if(!p||!sel[0])return;let v=e.target.value;
+  $('#props').addEventListener('change',e=>{if(e.target.id==='slotSel'||e.target.dataset.bl)return;if(e.target.dataset.fx&&sel[0]){changeFx(e.target);return}const p=e.target.dataset.p;if(!p||!sel[0])return;let v=e.target.value;
     if(['x','y','width','height','rotation','fontSize','strokeWidth'].includes(p))v=+v;
     snapshot();
     if(p==='img'){if(effMap[sel[0]].slot==='image'){skus[cur].img=v}else setProps(sel[0],{img:v})}else setProps(sel[0],{[p]:v});
     render()});
-  $('#props').addEventListener('change',e=>{if(e.target.id==='slotChk')setSlot(sel[0],e.target.checked)});
-  $('#props').addEventListener('click',e=>{if(e.target.id==='fxReset'){snapshot();setProps(sel[0],{fx:null});render();return}if(e.target.id==='aiBgBtn'){aiRemoveBg();return}if(e.target.id==='plainBgBtn'){removeBg();return}if(e.target.id==='applySel'){openApply('sel');return}if(e.target.id==='replBtn'){$('#replIn').value='';$('#replIn').click();return}if(e.target.id==='resetOv'){snapshot();delete skus[cur].overrides[sel[0]];render()}});
+  $('#props').addEventListener('change',e=>{if(e.target.id==='slotSel')setSlot(sel[0],e.target.value);if(e.target.dataset.bl&&sel[0]){const d=effMap[sel[0]],bl={...(d.blend||{})};bl[e.target.dataset.bl]=+e.target.value;snapshot();setProps(sel[0],{blend:bl});render()}});
+  $('#props').addEventListener('input',e=>{if(e.target.dataset.bl){const sp=e.target.parentElement.querySelector('label span');if(sp)sp.textContent=e.target.value}});
+  $('#props').addEventListener('click',e=>{if(e.target.id==='fxReset'){snapshot();setProps(sel[0],{fx:null});render();return}if(e.target.id==='aiBgBtn'){aiRemoveBg();return}if(e.target.id==='bgOpen'){openBackgrounds(sel[0]);return}if(e.target.id==='blAll'){const id=sel[0],f=findIn(base,id);if(!f)return;snapshot();f.d.blend=clone(effMap[id].blend);clearOverrides(id,['blend']);render();renderStrip();toast('Blend applied to all products');return}if(e.target.id==='plainBgBtn'){removeBg();return}if(e.target.id==='applySel'){openApply('sel');return}if(e.target.id==='replBtn'){$('#replIn').value='';$('#replIn').click();return}if(e.target.id==='resetOv'){snapshot();delete skus[cur].overrides[sel[0]];render()}});
   stage.container().addEventListener('mousedown',()=>{if(document.activeElement&&typing(document.activeElement))document.activeElement.blur()});
 }
 
