@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>EM Tool</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&family=Roboto:ital,wght@0,400;0,700;1,400&family=Oswald:wght@400;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13px;color:#1d1d1f;background:#f4f4f5}
@@ -20,9 +20,20 @@ button:hover{background:#f4f4f5}
 label.all{display:flex;align-items:center;gap:6px;white-space:nowrap;padding:5px 8px;border-radius:6px;border:1px solid #d4d4d8;cursor:pointer}
 label.all.on{background:#fef3c7;border-color:#f59e0b}
 #main{display:flex;height:calc(100% - 48px - 132px)}
-body.tools #main{height:calc(100% - 48px - 132px - 38px)}
+body.optbar #main{height:calc(100% - 48px - 132px - 38px)}
 #opts{display:none;height:38px;align-items:center;gap:14px;padding:0 12px;background:#fafafa;border-bottom:1px solid #e4e4e7;white-space:nowrap;overflow-x:auto}
-body.tools #opts{display:flex}
+body.optbar #opts{display:flex}
+.tbn{min-width:30px;height:28px;padding:0 7px;display:inline-flex;align-items:center;justify-content:center}
+.tbn.on{background:#18181b;color:#fff;border-color:#18181b}
+.tgrp{display:inline-flex;gap:2px}
+#opts input[type=color]{width:30px;height:28px;padding:1px;border:1px solid #d4d4d8;border-radius:6px;background:#fff}
+#ctx{position:absolute;z-index:6;display:none;background:#fff;border:1px solid #d4d4d8;border-radius:10px;padding:4px;gap:4px;box-shadow:0 4px 14px rgba(0,0,0,.14);white-space:nowrap}
+#ctx button{border:none;background:transparent;padding:6px 10px;border-radius:7px;font-size:13px}
+#ctx button:hover{background:#f4f4f5}
+#ctx button.pri{background:#18181b;color:#fff}#ctx button.pri:hover{background:#3f3f46}
+#ctx .sep{width:1px;background:#e4e4e7;margin:4px 2px}
+#pop{position:fixed;z-index:25;background:#fff;border:1px solid #d4d4d8;border-radius:10px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:none;width:250px}
+#pop .fld input,#pop .fld select{width:100%}
 #opts label{display:flex;align-items:center;gap:6px;color:#52525b}
 #opts input[type=range]{width:110px}
 #opts select,#opts input[type=number]{font:inherit;padding:3px 5px;border:1px solid #d4d4d8;border-radius:6px}
@@ -79,6 +90,34 @@ footer .lbl{width:150px;flex-shrink:0;line-height:1.5;color:#52525b}
 #modal table{width:100%;border-collapse:collapse}
 #modal td{padding:5px 4px;border-bottom:1px solid #f4f4f5;vertical-align:top}
 #modal td:first-child{width:46%}
+#home{display:none;height:calc(100% - 48px);overflow-y:auto;padding:22px 28px 60px}
+body.home #home{display:block}
+body.home #opts,body.home #main,body.home footer,body.home .ed{display:none!important}
+body.lay .camponly{display:none!important}
+body:not(.home) .homeonly{display:none}
+header .tabs{flex:1}
+.hhead{display:flex;align-items:center;gap:10px;margin:8px 0 12px}
+.hhead h2{font-size:17px;margin:0;flex:1}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:28px}
+.card{background:#fff;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.card .th{aspect-ratio:1;background:#f4f4f5;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.card .th img{width:100%;height:100%;object-fit:cover}
+.card .bd{padding:9px 11px}
+.card .nm2{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.card .acts button{padding:3px 8px;font-size:12px}
+.pri{background:#18181b!important;color:#fff!important;border-color:#18181b!important}
+.empty{border:1px dashed #d4d4d8;border-radius:12px;padding:26px;color:#71717a;text-align:center}
+#docName{font-weight:600;cursor:pointer;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:3px 6px;border-radius:6px}
+#docName:hover{background:#f4f4f5}
+#saveState{font-size:12px;color:#71717a;white-space:nowrap}
+.layPick{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;max-height:220px;overflow:auto}
+.layPick label{border:2px solid #e4e4e7;border-radius:8px;padding:5px;cursor:pointer;text-align:center;font-size:12px}
+.layPick label.on{border-color:#2563eb}
+.layPick img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;display:block;margin-bottom:4px}
+.prow{display:grid;grid-template-columns:44px 1fr 1.6fr auto auto;gap:6px;align-items:center;margin-bottom:6px}
+.prow img{width:44px;height:44px;object-fit:contain;background:#f4f4f5;border-radius:4px}
+.prow input{font:inherit;padding:4px 6px;border:1px solid #d4d4d8;border-radius:6px;min-width:0}
 #toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:#18181b;color:#fff;padding:8px 14px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:520px;text-align:center}
 #toast.show{opacity:1}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#f4f4f5;z-index:40;font-size:14px;color:#52525b}
@@ -90,17 +129,29 @@ footer .lbl{width:150px;flex-shrink:0;line-height:1.5;color:#52525b}
 <div id="loading">Loading the prototype…</div>
 <header>
   <span class="title">EM Tool <span style="font-weight:400;color:#71717a">· prototype</span></span>
-  <div class="tabs" id="tabs"></div>
-  <button id="applyBtn" style="background:#18181b;color:#fff;border-color:#18181b">Apply to… <span id="applyCount"></span></button>
-  <button id="toolsBtn" title="Show or hide the Photopea-style toolbox">Tools</button>
-  <button id="exportBtn" title="Export images (Ctrl+Alt+Shift+W)">Export</button>
-  <button id="addImgBtn" title="Add image (or drag a file onto the canvas, or Ctrl+V)">Add image</button>
+  <button id="homeBtn" class="ed" title="Back to Home">← Home</button>
+  <span id="docName" class="ed" title="Click to rename"></span>
+  <div class="tabs ed" id="tabs"></div>
+  <span style="flex:1" class="homeonly"></span>
+  <span id="saveState"></span>
+  <button id="prodBtn" class="ed camponly" title="Add, import or remove products">Products</button>
+  <button id="applyBtn" class="ed camponly" style="background:#18181b;color:#fff;border-color:#18181b">Apply to… <span id="applyCount"></span></button>
+  <button class="ed" id="toolsBtn" title="Show or hide the Photopea-style toolbox">Tools</button>
+  <button class="ed camponly" id="exportBtn" title="Export images (Ctrl+Alt+Shift+W)">Export</button>
+  <button class="ed" id="addImgBtn" title="Add image (or drag a file onto the canvas, or Ctrl+V)">Add image</button>
   <input type="file" id="fileIn" accept="image/*" multiple hidden>
   <input type="file" id="replIn" accept="image/*" hidden>
-  <button id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
-  <button id="redoBtn" title="Redo (Ctrl+Shift+Z)">Redo</button>
+  <button class="ed" id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
+  <button class="ed" id="redoBtn" title="Redo (Ctrl+Shift+Z)">Redo</button>
   <button id="helpBtn" title="All shortcuts (?)">Shortcuts ?</button>
 </header>
+<div id="home">
+  <div class="hhead"><h2>Campaigns</h2><button id="newCampBtn" class="pri">+ New campaign</button></div>
+  <div id="campGrid" class="cards"></div>
+  <div class="hhead"><h2>Layouts</h2><button id="newLayBtn">+ New layout</button></div>
+  <div id="layGrid" class="cards"></div>
+  <p class="muted" style="line-height:1.6">Everything is saved automatically in this browser. Layouts are your templates; a campaign copies a layout and adds your products (SKUs).</p>
+</div>
 <div id="opts"></div>
 <div id="main">
   <aside id="layers"></aside>
@@ -109,6 +160,7 @@ footer .lbl{width:150px;flex-shrink:0;line-height:1.5;color:#52525b}
     <div id="stage"></div>
     <canvas class="ruler" id="rulerT"></canvas><canvas class="ruler" id="rulerL"></canvas><div id="rulerC" title="Double-click to clear your guides"></div>
     <div id="banner"></div>
+    <div id="ctx"></div>
     <div id="zoom">100%</div>
     <div id="focushint">Click the canvas first so your keys go to the editor</div>
   </div>
@@ -160,7 +212,39 @@ footer .lbl{width:150px;flex-shrink:0;line-height:1.5;color:#52525b}
   <div id="exErr" style="color:#b91c1c;margin-top:8px;min-height:18px"></div>
   <div style="display:flex;justify-content:flex-end;gap:8px"><button id="exCancel">Cancel</button><button id="exGo" style="background:#18181b;color:#fff;border-color:#18181b">Export</button></div>
 </div></div>
+<div id="pop"></div><input type="file" id="fontIn" accept=".ttf,.otf,.woff,.woff2" hidden>
 <input type="color" id="fgIn" hidden><input type="color" id="bgIn" hidden>
+<div id="askDlg" class="dlg"><div class="box" style="width:420px">
+  <b style="font-size:15px" id="askTitle"></b><p class="muted" id="askText" style="line-height:1.5"></p>
+  <input id="askIn" style="width:100%;font:inherit;padding:6px 8px;border:1px solid #d4d4d8;border-radius:6px">
+  <div id="askErr" style="color:#b91c1c;min-height:18px;margin-top:6px"></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px"><button id="askNo">Cancel</button><button id="askYes" class="pri">OK</button></div>
+</div></div>
+<div id="ncDlg" class="dlg"><div class="box" style="width:620px">
+  <div style="display:flex;align-items:center"><b style="font-size:15px;flex:1">New campaign</b><button id="ncClose">Close</button></div>
+  <div class="fld" style="margin-top:12px"><label>Campaign name</label><input id="ncName" value="New campaign" style="width:100%;font:inherit;padding:6px 8px;border:1px solid #d4d4d8;border-radius:6px"></div>
+  <div style="font-weight:600;margin:10px 0 6px">Layout</div><div class="layPick" id="ncLayouts"></div>
+  <div style="font-weight:600;margin:12px 0 6px">Products</div>
+  <label class="chk"><input type="radio" name="ncStart" value="photos" checked> From product photos (one product per photo, named from the file name)</label>
+  <label class="chk"><input type="radio" name="ncStart" value="sheet"> From a spreadsheet (Excel or CSV) plus photos <a href="#" id="ncTpl">Download template</a></label>
+  <label class="chk"><input type="radio" name="ncStart" value="empty"> Empty, add products later</label>
+  <div id="ncFiles" style="margin:8px 0 0 22px;line-height:2">
+    <div id="ncSheetRow">Spreadsheet: <input type="file" id="ncSheet" accept=".csv,.xlsx,.xls"></div>
+    <div id="ncPhotoRow">Photos: <input type="file" id="ncPhotos" accept="image/*" multiple> <span class="muted" id="ncPhotoN"></span></div>
+  </div>
+  <div id="ncErr" style="color:#b91c1c;min-height:18px;margin-top:8px"></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px"><button id="ncCancel">Cancel</button><button id="ncGo" class="pri">Create campaign</button></div>
+</div></div>
+<div id="prodDlg" class="dlg"><div class="box" style="width:680px">
+  <div style="display:flex;align-items:center"><b style="font-size:15px;flex:1">Products in this campaign</b><button id="prClose">Done</button></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0">
+    <button id="prPhotos">Add from photos…</button><button id="prSheet">Import spreadsheet…</button><button id="prTpl">Download template</button>
+    <input type="file" id="prPhotoIn" accept="image/*" multiple hidden><input type="file" id="prSheetIn" accept=".csv,.xlsx,.xls" hidden><input type="file" id="prSheetPhotos" accept="image/*" multiple hidden><input type="file" id="prChangeIn" accept="image/*" hidden>
+  </div>
+  <div class="prow muted" style="font-size:12px"><span></span><span>SKU</span><span>Product name</span><span></span><span></span></div>
+  <div id="prList" style="max-height:360px;overflow:auto"></div>
+  <p class="muted" style="line-height:1.5;margin-bottom:0">A spreadsheet needs a SKU column. Optional columns: Product name, Image file (matched to the photos you pick next), and one column per text layer that changes per product.</p>
+</div></div>
 <div id="toast"></div>
 <div id="offscreen" style="position:absolute;left:-9999px;top:0;width:10px;height:10px;overflow:hidden"></div>
 
@@ -236,11 +320,13 @@ let showGuides=true, showGrid=false, hist=[], fut=[];
 function walk(arr,f,parent){arr.forEach((d,i)=>{f(d,arr,i,parent);if(d.children)walk(d.children,f,d)})}
 function findIn(arr,id){let r=null;walk(arr,(d,a,i)=>{if(!r&&d.id===id)r={d,arr:a,i}});return r}
 function reId(d){d.id=uid();if(d.children)d.children.forEach(reId);return d}
-function effective(i){
-  const s=skus[i],doc=clone(base);
-  walk(doc,n=>{const o=s.overrides[n.id];if(o)Object.assign(n,clone(o));if(n.slot==='name')n.text=s.name;if(n.slot==='image')n.img=s.img});
+function effectiveOf(b,s){
+  const doc=clone(b);
+  walk(doc,n=>{const o=s.overrides[n.id];if(o)Object.assign(n,clone(o));if(n.slot==='name')n.text=s.name;if(n.slot==='image')n.img=s.img;if(n.slot==='text'&&s.values&&s.values[n.id]!=null)n.text=s.values[n.id]});
   return doc.concat(clone(s.extras).map(e=>(e.extra=true,e)));
 }
+function effective(i){return effectiveOf(base,skus[i])}
+const extrasTarget=()=>applyAll?base:skus[cur].extras;
 const isExtra=id=>!!findIn(skus[cur].extras,id);
 
 /* ---------- Konva setup ---------- */
@@ -262,7 +348,7 @@ function setupStage(){
   marqRect=new Konva.Rect({fill:'rgba(37,99,235,.08)',stroke:'#2563eb',strokeWidth:1,dash:[4,3],strokeScaleEnabled:false,visible:false,listening:false});
   ui.add(gridGroup,guideGroup,snapGroup,marqRect,tr);
   stage.add(bgL,content,ui);
-  tr.on('transformend',()=>commitTransform(tr.nodes()));
+  tr.on('transformstart',()=>{$('#ctx').style.display='none'});tr.on('transformend',()=>commitTransform(tr.nodes()));
   off=new Konva.Stage({container:'offscreen',width:W*.2,height:H*.2,scaleX:.2,scaleY:.2});
   offLayer=new Konva.Layer();off.add(offLayer);
   new ResizeObserver(()=>{stage.size({width:box.clientWidth-20,height:box.clientHeight-20})}).observe(box);
@@ -278,9 +364,13 @@ function build(d){
   else if(d.type==='line'){const sw=d.strokeWidth||4,C=d.arrow?Konva.Arrow:Konva.Line;n=new C({...common,points:d.points,stroke:d.stroke,fill:d.stroke,strokeWidth:sw,pointerLength:sw*3,pointerWidth:sw*3,lineCap:'round',hitStrokeWidth:Math.max(20,sw)})}
   else if(d.type==='text'){
     let fs=d.fontSize;
-    const base={text:d.text||'',width:d.width,fontSize:fs,fontFamily:'Inter',fontStyle:d.fontStyle||'400',align:d.align||'left',lineHeight:d.lineHeight||1.15,wrap:'word'};
+    let txt=d.text||'';if(d.caps)txt=txt.toUpperCase();if(d.vertical)txt=txt.split('\n').map(l=>[...l].join('\n')).join('\n\n');
+    const base={text:txt,width:d.width,fontSize:fs,fontFamily:fontCss(d.fontFamily),fontStyle:(d.italic?'italic ':'')+(d.fontStyle||'400'),align:d.align||'left',lineHeight:d.lineHeight||1.15,letterSpacing:d.letterSpacing||0,textDecoration:d.textDecoration||'',wrap:'word'};
     if(d.autoFit){const t=new Konva.Text(base);while(t.height()>d.height&&fs>12){fs-=2;t.fontSize(fs)}t.destroy()}
-    n=new Konva.Text({...common,...base,fontSize:fs,height:d.height,fill:d.fill,verticalAlign:'middle'});
+    const bend=d.warp&&d.warp.style==='arc'?(+d.warp.bend||0):0;
+    if(bend&&!d.vertical){const w=d.width,y0=d.height/2+fs*.35,sg=bend/100*w*.35;
+      n=new Konva.TextPath({...common,data:`M 0 ${y0} Q ${w/2} ${y0-2*sg} ${w} ${y0}`,text:txt.replace(/\n/g,' '),fontSize:fs,fontFamily:base.fontFamily,fontStyle:base.fontStyle,letterSpacing:base.letterSpacing,textDecoration:base.textDecoration,fill:d.fill,align:d.align==='left'?'left':d.align==='right'?'right':'center'})}
+    else n=new Konva.Text({...common,...base,fontSize:fs,height:d.height,fill:d.fill,verticalAlign:d.vAlign||'middle'});
   }
   else if(d.type==='image'){
     n=new Konva.Group(common);
@@ -314,18 +404,18 @@ function render(){
   tr.rotateEnabled(tMode);
   content.batchDraw();ui.batchDraw();
   renderLayers();renderProps();renderTabs();renderBanner();queueStrip();
-  tr.visible(tool==='move'||tool==='text');updateSelOverlay();
+  tr.visible(tool==='move'||tool==='text');updateSelOverlay();renderOpts();renderCtx();
 }
 function renderSel(){
   sel=sel.filter(id=>effMap[id]);
   tr.nodes(sel.filter(id=>!effMap[id].locked).map(nodeById).filter(Boolean));
-  ui.batchDraw();renderLayers();renderProps();
+  ui.batchDraw();renderLayers();renderProps();renderOpts();renderCtx();
 }
 
 /* ---------- history ---------- */
 const snapState=()=>JSON.stringify({base,skus});
-function snapshot(){hist.push(snapState());if(hist.length>100)hist.shift();fut=[]}
-function restore(s){const o=JSON.parse(s);base=o.base;skus=o.skus;render()}
+function snapshot(){hist.push(snapState());if(hist.length>100)hist.shift();fut=[];queueSave()}
+function restore(s){const o=JSON.parse(s);base=o.base;skus=o.skus;if(cur>=skus.length)cur=0;render();queueSave()}
 function undo(){if(!hist.length)return toast('Nothing to undo');fut.push(snapState());restore(hist.pop())}
 function redo(){if(!fut.length)return toast('Nothing to redo');hist.push(snapState());restore(fut.pop())}
 
@@ -334,6 +424,7 @@ function setProps(id,props){
   props=clone(props);
   const d=effMap[id];
   if(d&&d.slot==='name'&&'text' in props){skus[cur].name=props.text;delete props.text}
+  if(d&&d.slot==='text'&&'text' in props&&!applyAll){skus[cur].values=skus[cur].values||{};skus[cur].values[id]=props.text;delete props.text}
   if(!Object.keys(props).length)return;
   const ex=findIn(skus[cur].extras,id);
   if(ex){Object.assign(ex.d,props);return}
@@ -458,18 +549,19 @@ function editText(id){
   const r=node.getClientRect(),sc=stage.scaleX();
   const ta=document.createElement('textarea');ta.className='ta-edit';
   Object.assign(ta.style,{left:(r.x+20)+'px',top:(r.y+20)+'px',width:Math.max(r.width,60)+'px',height:Math.max(r.height,30)+'px',
-    fontSize:(node.fontSize()*sc)+'px',fontWeight:d.fontStyle||'400',textAlign:d.align||'left',color:d.fill,lineHeight:d.lineHeight||1.15});
+    fontSize:((node.fontSize?node.fontSize():d.fontSize)*sc)+'px',fontWeight:d.fontStyle||'400',fontStyle:d.italic?'italic':'normal',fontFamily:fontCss(d.fontFamily),letterSpacing:((d.letterSpacing||0)*sc)+'px',textAlign:d.align||'left',color:d.fill,lineHeight:d.lineHeight||1.15});
   ta.value=d.text||'';$('#wrap').appendChild(ta);node.hide();tr.hide();content.batchDraw();ui.batchDraw();
   setTimeout(()=>{ta.focus();ta.select()},0);
   let done=false;
-  const finish=save=>{if(done)return;done=true;const v=ta.value;ta.remove();tr.show();
+  const finish=save=>{if(done)return;done=true;curEdit=null;const v=ta.value;ta.remove();tr.show();
     if(save&&v!==(d.text||'')){snapshot();setProps(id,{text:v})}render()};
   ta.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'){e.preventDefault();finish(false)}else if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();finish(true)}});
   ta.addEventListener('blur',()=>finish(true));
+  curEdit={finish};renderOpts();renderCtx();
 }
 function newText(p){
   snapshot();
-  const t={id:uid(),name:'Text',type:'text',x:R(p.x),y:R(p.y-35),width:420,height:70,text:'New text',fontSize:44,fontStyle:'600',fill:'#141414',align:'left',lineHeight:1.15};
+  const T=textDef;const t={id:uid(),name:'Text',type:'text',x:R(p.x),y:R(p.y-35),width:420,height:Math.max(70,Math.round(T.fontSize*1.6)),text:'New text',fontSize:T.fontSize,fontFamily:T.fontFamily,fontStyle:T.fontStyle,italic:T.italic,fill:T.fill,align:T.align,lineHeight:1.15};
   if(applyAll)base.push(t);else skus[cur].extras.push(t);
   sel=[t.id];render();editText(t.id);
 }
@@ -542,6 +634,7 @@ function onMove(ev){
     drag.st=stops(new Set(drag.ids));
   }
   if(ev.shiftKey){if(Math.abs(dx)>Math.abs(dy))dy=0;else dx=0}
+  $('#ctx').style.display='none';
   drag.nodes.forEach((n,i)=>n.position({x:drag.orig[i].x+dx,y:drag.orig[i].y+dy}));
   snapGroup.destroyChildren();
   if(!(ev.ctrlKey||ev.metaKey)){
@@ -559,7 +652,7 @@ function onUp(){
   if(toolDrag){const t=toolDrag;toolDrag=null;t.up&&t.up();return}
   if(marq){marq=null;marqRect.visible(false);ui.batchDraw();return}
   if(!drag)return;const d=drag;drag=null;snapGroup.destroyChildren();ui.batchDraw();
-  if(!d.moved){if(d.toggleOff){sel=sel.filter(s=>s!==d.toggleOff);renderSel()}return}
+  if(!d.moved){if(d.toggleOff){sel=sel.filter(s=>s!==d.toggleOff);renderSel()}else renderCtx();return}
   d.nodes.forEach(n=>setProps(n.getAttr('lid'),{x:R(n.x()),y:R(n.y())}));
   render();
 }
@@ -575,6 +668,8 @@ function fit(){const z=Math.min((stage.width()-60)/W,(stage.height()-60)/H);stag
 /* ---------- keyboard ---------- */
 const typing=t=>/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
 function onKey(e){
+  if(document.body.classList.contains('home')){if(e.key==='Escape')closeDialogs();return}
+  if(['askDlg','ncDlg','prodDlg'].some(x=>$('#'+x).style.display==='flex')){if(e.key==='Escape')closeDialogs();return}
   if(e.key==='?'&&!typing(e.target)){e.preventDefault();openModal();return}
   if($('#modal').style.display==='flex'){if(e.key==='Escape')closeModal();return}
   if($('#exportDlg').style.display==='flex'){if(e.key==='Escape')closeExport();return}
@@ -601,7 +696,7 @@ function onKey(e){
   if(c&&code==='KeyA')return go(()=>{sel=eff.filter(d=>!d.locked&&d.visible!==false).map(d=>d.id);renderSel()});
   if(c&&s&&code==='KeyI'&&pixSel)return go(invertSel);
   if(c&&code==='KeyD')return go(()=>{if(pixSel){clearPixSel();return}sel=[];renderSel()});
-  if(c&&code==='KeyS')return go(save);
+  if(c&&code==='KeyS')return go(()=>persistNow(true));
   if((k==='Delete'||k==='Backspace')&&pixSel)return go(deletePixels);
   if(k==='Delete'||k==='Backspace')return go(deleteSel);
   if(k.startsWith('Arrow')){const st=s?10:1;return go(()=>nudge(k==='ArrowLeft'?-st:k==='ArrowRight'?st:0,k==='ArrowUp'?-st:k==='ArrowDown'?st:0))}
@@ -621,12 +716,14 @@ function onKeyUp(e){
 
 /* ---------- panels ---------- */
 function renderTabs(){
-  $('#tabs').innerHTML=skus.map((s,i)=>`<div class="tab${i===cur?' on':''}" data-i="${i}">${s.sku}${Object.keys(s.overrides).length||s.extras.length?'<span class="dot" title="Has its own changes"></span>':''}</div>`).join('');
+  if(openDoc&&openDoc.kind==='layout'){$('#tabs').innerHTML='<div class="tab on">Layout preview</div>';return}
+  $('#tabs').innerHTML=skus.map((s,i)=>`<div class="tab${i===cur?' on':''}" data-i="${i}">${esc(s.sku)}${Object.keys(s.overrides).length||s.extras.length?'<span class="dot" title="Has its own changes"></span>':''}</div>`).join('');
 }
 function renderBanner(){
   const b=$('#banner');
-  b.className='sku';
-  b.textContent=(tMode?'Free transform · ':'')+'Editing '+skus[cur].sku+' · use Apply to… to copy changes to other products';
+  b.className=applyAll?'all':'sku';
+  b.textContent=(tMode?'Free transform · ':'')+(applyAll?'Editing the layout · changes apply to new campaigns made from it':'Editing '+skus[cur].sku+' · use Apply to… to copy changes to other products');
+  $('#prodBtn').textContent='Products ('+skus.length+')';
   const n=changedIds().length;$('#applyCount').textContent=n?'('+n+')':'';
 }
 function renderLayers(){
@@ -660,13 +757,15 @@ function renderProps(){
   h+=`<div class="fld"><label>Rotation</label><input type="number" data-p="rotation" value="${R(d.rotation||0)}"></div>`;
   if(d.type==='text')h+=`<div class="fld"><label>Text${d.slot?' (this product)':''}</label><textarea rows="3" data-p="text">${esc(d.text||'')}</textarea></div>
     <div class="grid2"><div class="fld"><label>Size</label><input type="number" data-p="fontSize" value="${R(d.fontSize)}"></div><div class="fld"><label>Colour</label><input type="color" data-p="fill" value="${d.fill||'#000000'}"></div></div>
-    <div class="fld"><label>Weight</label><select data-p="fontStyle">${['400','600','800'].map(w=>`<option${w===String(d.fontStyle)?' selected':''}>${w}</option>`).join('')}</select></div>`;
+    <div class="fld"><label>Weight</label><select data-p="fontStyle">${WEIGHTS.map(([w,l])=>`<option value="${w}"${w===String(d.fontStyle||'400')?' selected':''}>${l}</option>`).join('')}</select></div>`;
   if(d.type==='rect'||d.type==='ellipse')h+=`<div class="fld"><label>Fill</label><input type="color" data-p="fill" value="${/^#/.test(d.fill)?d.fill:'#ffffff'}"></div>`;
   if(d.type==='line')h+=`<div class="grid2"><div class="fld"><label>Colour</label><input type="color" data-p="stroke" value="${d.stroke||'#000000'}"></div><div class="fld"><label>Thickness</label><input type="number" data-p="strokeWidth" value="${d.strokeWidth||4}"></div></div>`;
   if(toolsOn)h+=fxHtml(d);
-  if(d.type==='image')h+=`<div class="fld"><label>${d.slot?'Product image (this product)':'Image'}</label><select data-p="img">${[...Object.keys(ART),...Object.keys(assets)].map(k=>`<option value="${k}"${k===d.img?' selected':''}>${esc(assetNames[k]||k)}</option>`).join('')}</select></div>
-    <button id="replBtn" style="width:100%;margin-bottom:10px">Replace with your image…</button>`;
-  if(d.slot)h+=`<p class="muted" style="line-height:1.5">This layer varies per product.</p>`;
+  if(d.type==='image')h+=`<div class="fld"><label>${d.slot?'Product image (this product)':'Image'}</label><select data-p="img">${[...new Set([...Object.keys(ART),...Object.keys(assets),d.img].filter(Boolean))].map(k=>`<option value="${k}"${k===d.img?' selected':''}>${esc(assetNames[k]||k)}</option>`).join('')}</select></div>
+    <button id="replBtn" style="width:100%;margin-bottom:8px">Replace with your image…</button>
+    <button id="aiBgBtn" style="width:100%;margin-bottom:6px;background:#18181b;color:#fff;border-color:#18181b">${aiBusy?'Removing background…':'Remove background'}</button>
+    <button id="plainBgBtn" style="width:100%;margin-bottom:10px">Remove plain background (fast)</button>`;
+  if((d.type==='text'||d.type==='image')&&!d.extra)h+=`<label class="chk" title="Each product gets its own ${d.type==='image'?'photo':'text'} in this layer"><input type="checkbox" id="slotChk"${d.slot?' checked':''}> Changes per product${d.slot==='name'?' (product name)':d.slot==='image'?' (product photo)':''}</label>`;
   const ch=applicableFor([id]);
   if(d.extra)h+=`<p class="muted" style="line-height:1.5">This layer exists only on ${esc(skus[cur].sku)} so far.</p>`;
   if(ov)h+=`<p class="muted" style="line-height:1.5">${esc(skus[cur].sku)} has its own changes to this layer.</p>`;
@@ -704,6 +803,127 @@ async function replaceImage(file){
   render();toast(d.slot==='image'?'Product image replaced for '+skus[cur].sku:'Image replaced');
 }
 
+/* ---------- AI background removal (U²-Net small, Apache-2.0, runs in the browser) ---------- */
+const ORT_VER='1.20.1',ORT_CDN=`https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VER}/dist/`,BG_MODEL='models/u2netp.onnx',BG_SIZE=320;
+let aiSess=null,aiLoading=null,aiBusy=false;
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('script'));document.head.appendChild(s)})}
+async function aiSession(){
+  if(aiSess)return aiSess;
+  if(!aiLoading)aiLoading=(async()=>{
+    if(!window.ort)await loadScript(ORT_CDN+'ort.wasm.min.js');
+    ort.env.wasm.wasmPaths=ORT_CDN;ort.env.wasm.numThreads=1;
+    const r=await fetch(BG_MODEL);if(!r.ok)throw new Error('model');
+    return ort.InferenceSession.create(new Uint8Array(await r.arrayBuffer()),{executionProviders:['wasm']})})();
+  try{aiSess=await aiLoading}catch(e){aiLoading=null;throw e}return aiSess}
+async function aiMask(src){
+  const S=BG_SIZE,c=blankSize(S,S),x=c.getContext('2d');x.fillStyle='#ffffff';x.fillRect(0,0,S,S);x.drawImage(src,0,0,S,S);
+  const d=x.getImageData(0,0,S,S).data,f=new Float32Array(3*S*S),mean=[.485,.456,.406],std=[.229,.224,.225];let mxv=1;
+  for(let i=0;i<S*S;i++)for(let k=0;k<3;k++)mxv=Math.max(mxv,d[i*4+k]);
+  for(let i=0;i<S*S;i++)for(let k=0;k<3;k++)f[k*S*S+i]=(d[i*4+k]/mxv-mean[k])/std[k];
+  const sess=await aiSession(),out=await sess.run({[sess.inputNames[0]]:new ort.Tensor('float32',f,[1,3,S,S])}),o=out[sess.outputNames[0]].data;
+  let mn=Infinity,mx=-Infinity;for(let i=0;i<S*S;i++){if(o[i]<mn)mn=o[i];if(o[i]>mx)mx=o[i]}
+  const m=blankSize(S,S),mc=m.getContext('2d'),id=mc.createImageData(S,S);
+  for(let i=0;i<S*S;i++){const v=mx>mn?(o[i]-mn)/(mx-mn):0;id.data[i*4]=id.data[i*4+1]=id.data[i*4+2]=255;id.data[i*4+3]=Math.round(v*255)}
+  mc.putImageData(id,0,0);
+  const w=src.naturalWidth||src.width,h=src.naturalHeight||src.height,M=blankSize(w,h),Mc=M.getContext('2d');Mc.imageSmoothingEnabled=true;Mc.imageSmoothingQuality='high';Mc.drawImage(m,0,0,w,h);
+  const md=Mc.getImageData(0,0,M.width,M.height),a=md.data;for(let i=3;i<a.length;i+=4)a[i]=Math.max(0,Math.min(255,Math.round((a[i]-60)*255/140)));Mc.putImageData(md,0,0);
+  return M}
+async function aiRemoveBg(){
+  if(aiBusy)return;const id=sel.length===1&&effMap[sel[0]]&&effMap[sel[0]].type==='image'?sel[0]:null;if(!id)return toast('Select an image layer first, like the Product image.');
+  const info=imgInfo(id);if(!info)return;aiBusy=true;renderProps();renderCtx();
+  toast(aiSess?'Removing background…':'Loading the background remover (about 5 MB, first time only)…');
+  try{const M=await aiMask(info.src);const B=copyCanvas(info.src),c=B.getContext('2d');c.globalCompositeOperation='destination-in';c.drawImage(M,0,0);
+    snapshot();commitRaster(id,B);toast('Background removed. Touch up edges with the eraser (E) or brush (B). Ctrl+Z to undo')}
+  catch(e){toast(location.protocol==='file:'||/claude/.test(location.hostname)?'The AI background remover works on your live EM Tool link. Here, use "Remove plain background (fast)".':'Couldn’t load the background remover. Check that models/u2netp.onnx is uploaded and you are online. For plain backgrounds use "Remove plain background (fast)".')}
+  finally{aiBusy=false;renderProps();renderCtx()}
+}
+
+/* ---------- floating context bar on the selected layer ---------- */
+function renderCtx(){const el=$('#ctx');if(!el)return;const id=sel.length===1?sel[0]:null,d=id&&effMap[id];
+  if(!d||d.locked||!(tool==='move'||tool==='text')||curEdit||drag||toolDrag){el.style.display='none';return}
+  const b=(c,l,pri,t)=>`<button data-c="${c}"${pri?' class="pri"':''} title="${t||l}">${l}</button>`;
+  el.innerHTML=d.type==='image'?b('aibg',aiBusy?'Removing background…':'✨ Remove background',1,'Cut out the subject with AI')+b('plainbg','Plain bg',0,'Remove a plain white or single-colour background (fast)')+b('replace','Replace',0,'Replace with your image')+'<span class="sep"></span>'+b('apply','Apply to…')
+    :b('apply','Apply to…',0,'Copy this layer’s changes to other products')+b('dup','Duplicate',0,'Duplicate (Ctrl+J)')+b('del','Delete',0,'Delete (Del)');
+  el.style.display='flex';positionCtx()}
+function positionCtx(){const el=$('#ctx');if(!el||el.style.display==='none'||sel.length!==1)return;const n=nodeById(sel[0]);if(!n){el.style.display='none';return}
+  const r=n.getClientRect(),wr=$('#wrap'),W2=wr.clientWidth,ew=el.offsetWidth,eh=el.offsetHeight;
+  let x=r.x+20+r.width/2-ew/2,y=r.y+20-eh-(tMode?44:16);if(y<26)y=r.y+20+r.height+16;
+  x=Math.max(26,Math.min(W2-ew-6,x));y=Math.max(26,Math.min(wr.clientHeight-eh-6,y));el.style.left=x+'px';el.style.top=y+'px'}
+
+/* ---------- text options bar ---------- */
+const WEIGHTS=[['100','Thin'],['200','Extra light'],['300','Light'],['400','Regular'],['500','Medium'],['600','Semibold'],['700','Bold'],['800','Extra bold'],['900','Black']];
+const BUILTIN_FONTS=['Inter','Poppins','Montserrat','Roboto','Oswald','Bebas Neue','Arial','Helvetica','Georgia','Times New Roman','Verdana','Tahoma','Trebuchet MS','Impact','Courier New'];
+let fontStore=[],curEdit=null;const textDef={fontFamily:'Inter',fontStyle:'600',italic:false,fontSize:44,fill:'#141414',align:'left'};
+const fontCss=f=>{f=f||'Inter';return /[\s\d]/.test(f)?'"'+f+'"':f};
+function allFonts(){return[...fontStore.map(f=>f.name),...BUILTIN_FONTS]}
+async function registerFont(name,buf){const ff=new FontFace(name,buf);await ff.load();document.fonts.add(ff)}
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('emtool',2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('fonts'))r.result.createObjectStore('fonts',{keyPath:'name'});if(!r.result.objectStoreNames.contains('kv'))r.result.createObjectStore('kv')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function idbReq(mode,fn,store){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction(store||'fonts',mode),q=fn(t.objectStore(store||'fonts'));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)})}
+async function loadUserFonts(){
+  try{for(const f of fontStore){if(f.data){const b=await (await fetch(f.data)).arrayBuffer();await idbReq('readwrite',st=>st.put({name:f.name,buf:b}))}}}catch(e){}
+  let recs=[];try{recs=(await idbReq('readonly',st=>st.getAll()))||[]}catch(e){}
+  const legacy=fontStore.filter(f=>f.data&&!recs.some(r=>r.name===f.name));fontStore=[];
+  for(const r of recs){try{await registerFont(r.name,r.buf.slice(0));fontStore.push({name:r.name})}catch(e){}}
+  for(const f of legacy){try{const b=await (await fetch(f.data)).arrayBuffer();await registerFont(f.name,b);fontStore.push({name:f.name})}catch(e){}}
+}
+async function removeFont(name){try{await idbReq('readwrite',st=>st.delete(name))}catch(e){}fontStore=fontStore.filter(f=>f.name!==name);renderOpts();toast('Font "'+name+'" removed from this browser. Text already using it falls back until you upload it again.')}
+async function addFontFile(file){
+  if(!/\.(ttf|otf|woff2?)$/i.test(file.name))return toast('Use a .ttf, .otf, .woff or .woff2 font file.');
+  const name=file.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').trim();
+  try{const buf=await file.arrayBuffer();await registerFont(name,buf.slice(0));
+    let kept=true;try{await idbReq('readwrite',st=>st.put({name,buf}))}catch(e){kept=false}
+    fontStore=fontStore.filter(f=>f.name!==name);fontStore.unshift({name});
+    await applyText({fontFamily:name});toast(kept?'Font "'+name+'" added and saved in this browser.':'Font "'+name+'" added for this session only (this view can’t store fonts).')}
+  catch(e){toast('Could not read that font file.')}
+}
+const selTexts=()=>sel.filter(id=>effMap[id]&&effMap[id].type==='text');
+function textBarOn(){return tool==='text'||!!curEdit||(selTexts().length>0&&(tool==='move'||!toolsOn))}
+function textTarget(){const ids=selTexts();return ids.length?effMap[ids[0]]:textDef}
+async function applyText(props){
+  const ids=selTexts();const t={...textTarget(),...props};
+  try{await document.fonts.load(`${t.italic?'italic ':''}${t.fontStyle||400} 40px ${fontCss(t.fontFamily)}`)}catch(e){}
+  if(ids.length){snapshot();ids.forEach(id=>setProps(id,props));render()}else{Object.assign(textDef,props);renderOpts()}
+}
+const ALIGN_ICON=a=>`<svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor">${[[0,16],[a==='left'?0:a==='center'?3:6,a==='right'?16:a==='center'?13:10],[0,16],[a==='left'?0:a==='center'?3:6,a==='right'?16:a==='center'?13:10]].map(([x1,x2],i)=>`<rect x="${x1}" y="${i*4}" width="${x2-x1}" height="2"/>`).join('')}</svg>`;
+function textBarHtml(){
+  const t=textTarget(),fam=t.fontFamily||'Inter',fonts=allFonts();if(!fonts.includes(fam))fonts.unshift(fam);
+  const n=selTexts().length,editing=!!curEdit;
+  return `<b>Text</b>
+  <select data-tx="fontFamily" title="Font" style="max-width:170px">${(()=>{const mine=fontStore.map(f=>f.name),built=BUILTIN_FONTS,other=fonts.filter(f=>!mine.includes(f)&&!built.includes(f)),o=f=>`<option value="${esc(f)}"${f===fam?' selected':''} style="font-family:${esc(fontCss(f))}">${esc(f)}</option>`;
+    return (mine.length?`<optgroup label="Your fonts">${mine.map(o).join('')}</optgroup>`:'')+(other.length?`<optgroup label="Missing">${other.map(o).join('')}</optgroup>`:'')+`<optgroup label="Built-in">${built.map(o).join('')}</optgroup>`})()}<option value="__upload">Upload font…</option>${fontStore.length?'<option value="__manage">Manage your fonts…</option>':''}</select>
+  <select data-tx="fontStyle" title="Weight">${WEIGHTS.map(([w,l])=>`<option value="${w}"${w===String(t.fontStyle||'400')?' selected':''}>${l}</option>`).join('')}</select>
+  <button class="tbn${t.italic?' on':''}" data-ta="italic" title="Italic"><i style="font-family:Georgia,serif;font-weight:700">I</i></button>
+  <label title="Size">Size <input type="number" data-tx="fontSize" list="tsizes" min="4" max="1000" step="1" value="${R(t.fontSize||44)}" style="width:72px"></label>
+  <datalist id="tsizes">${[8,10,12,14,18,24,30,36,48,60,72,96,120,144].map(v=>`<option value="${v}">`).join('')}</datalist>
+  <input type="color" data-tx="fill" value="${/^#[0-9a-f]{6}$/i.test(t.fill||'')?t.fill:'#141414'}" title="Text colour">
+  <button class="tbn" data-ta="more" title="Character: line height, spacing, underline, caps">…</button>
+  <span class="tgrp">${['left','center','right'].map(a=>`<button class="tbn${(t.align||'left')===a?' on':''}" data-ta="align-${a}" title="Align ${a}">${ALIGN_ICON(a)}</button>`).join('')}</span>
+  <button class="tbn${t.vertical?' on':''}" data-ta="vertical" title="Vertical text">${t.vertical?'↓':'↑'}</button>
+  <button class="tbn${t.warp&&t.warp.style==='arc'&&+t.warp.bend?' on':''}" data-ta="warp" title="Warp text">Warp</button>
+  ${editing?`<button class="tbn" data-ta="cancel" title="Cancel edit (Esc)">✕</button><button class="tbn" data-ta="commit" title="Finish edit (Enter)">✓</button>`:''}
+  <span class="muted">${editing?'Editing text':n?(n>1?n+' text layers selected':'Changes apply to the selected text'):'Settings for new text'}</span>`;
+}
+function openFontsPop(anchor){const pp=$('#pop'),r=anchor.getBoundingClientRect();
+  pp.innerHTML=`<b>Your fonts</b><p class="muted" style="margin:6px 0 10px;line-height:1.5">Saved in this browser. Teammates upload their own copy.</p>`+
+    fontStore.map(f=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="flex:1;font-family:${esc(fontCss(f.name))}">${esc(f.name)}</span><button data-rmfont="${esc(f.name)}">Remove</button></div>`).join('')+
+    `<button data-upfont style="width:100%;margin-top:6px">Upload font…</button>`;
+  pp.style.left=Math.min(r.left,window.innerWidth-270)+'px';pp.style.top=(r.bottom+6)+'px';pp.style.display='block'}
+function openPop(btn,kind){
+  const t=textTarget(),pp=$('#pop'),r=btn.getBoundingClientRect(),dec=t.textDecoration||'';
+  pp.innerHTML=kind==='char'?`<b>Character</b>
+    <div class="grid2" style="margin-top:10px"><div class="fld"><label>Line height %</label><input type="number" data-cx="lineHeight" value="${Math.round((t.lineHeight||1.15)*100)}"></div>
+    <div class="fld"><label>Letter spacing px</label><input type="number" data-cx="letterSpacing" value="${t.letterSpacing||0}"></div></div>
+    <div class="fld"><label>Vertical position in box</label><select data-cx="vAlign">${[['top','Top'],['middle','Middle'],['bottom','Bottom']].map(([v,l])=>`<option value="${v}"${(t.vAlign||'middle')===v?' selected':''}>${l}</option>`).join('')}</select></div>
+    <label class="chk"><input type="checkbox" data-cx="caps"${t.caps?' checked':''}> All caps</label>
+    <label class="chk"><input type="checkbox" data-cx="underline"${dec.includes('underline')?' checked':''}> Underline</label>
+    <label class="chk"><input type="checkbox" data-cx="strike"${dec.includes('line-through')?' checked':''}> Strikethrough</label>`
+   :`<b>Warp text</b>
+    <div class="fld" style="margin-top:10px"><label>Style</label><select data-cx="warpStyle"><option value="none"${!(t.warp&&t.warp.style==='arc')?' selected':''}>None</option><option value="arc"${t.warp&&t.warp.style==='arc'?' selected':''}>Arc</option></select></div>
+    <div class="fld"><label>Bend <span>${(t.warp&&t.warp.bend)||0}</span></label><input type="range" min="-100" max="100" step="1" data-cx="warpBend" value="${(t.warp&&t.warp.bend)||0}"></div>
+    <p class="muted" style="margin:0;line-height:1.5">Arc puts one line of text on a curve. Negative bend curves it downwards.</p>`;
+  pp.style.left=Math.min(r.left,window.innerWidth-270)+'px';pp.style.top=(r.bottom+6)+'px';pp.style.display='block';
+}
+
 /* ---------- Photopea-style tools ---------- */
 let toolsOn=false,fg='#8C1D2C',bg='#ffffff',toolDrag=null,pixSel=null,cloneSrc=null,cloneOff=null,cropRect=null,lastFill='gradient',selOv=null,brushCur=null;
 const topt={size:30,hard:.8,opacity:1,tol:32,shape:'rounded',radius:30,lineW:6,gradTo:'bg'};
@@ -714,11 +934,12 @@ function setToolsOn(on,quiet){toolsOn=on;document.body.classList.toggle('tools',
   if(!on){clearPixSel();if(tool!=='move'&&tool!=='text')setTool('move')}renderToolbox();renderOpts();renderProps();
   if(!quiet)toast(on?'Toolbox on. Press a tool key (B brush, E eraser, W magic wand…) or click a tool.':'Toolbox off');}
 function setTool(t){tool=t;if(t!=='crop')cancelCrop(true);stage.container().style.cursor=CURSORS[t]||'crosshair';
-  if(t==='bucket'||t==='gradient')lastFill=t;tr.visible(t==='move'||t==='text');if(brushCur)brushCur.visible(false);ui.batchDraw();renderToolbox();renderOpts()}
+  if(t==='bucket'||t==='gradient')lastFill=t;tr.visible(t==='move'||t==='text');if(brushCur)brushCur.visible(false);ui.batchDraw();renderToolbox();renderOpts();renderCtx()}
 function renderToolbox(){$('#toolbox').innerHTML=TOOLS.map(([k,l,key,ic])=>`<button class="tb${tool===k?' on':''}" data-t="${k}" title="${l} (${key})">${ic}</button>`).join('')+
   `<div class="sw"><div id="swFg" title="Foreground colour (click to change, X swaps, D resets)" style="background:${fg}"></div><div id="swBg" title="Background colour" style="background:${bg}"></div></div>`}
 function renderSwatches(){const a=$('#swFg'),b=$('#swBg');if(a){a.style.background=fg;b.style.background=bg}}
 function renderOpts(){
+  const tb=textBarOn();document.body.classList.toggle('optbar',toolsOn||tb);if(tb){$('#opts').innerHTML=textBarHtml();return}
   const r=(k,l,min,max,val,div)=>`<label>${l} <input type="range" data-o="${k}" min="${min}" max="${max}" step="1" value="${val}"${div?` data-div="${div}"`:''}> <span class="v">${val}</span></label>`;
   const btn=(a,l)=>`<button data-a="${a}">${l}</button>`,hint=t=>`<span class="muted">${t}</span>`;
   const selBtns=btn('deletePixels','Delete selected')+btn('invertSel','Invert')+btn('clearPixSel','Deselect');
@@ -752,17 +973,29 @@ function rasterId(e,create){
   if(sel.length===1&&effMap[sel[0]]&&effMap[sel[0]].type==='image'&&!isLockedUp(sel[0]))return sel[0];
   const id=targetAt(e);if(id&&effMap[id].type==='image'){sel=[id];renderSel();return id}
   if(create){snapshot();const c=blankSize(W,H),key='px_'+uid();IMG[key]=c;assetNames[key]='Paint layer';
-    const d={id:uid(),name:'Paint layer',type:'image',img:key,x:0,y:0,width:W,height:H};skus[cur].extras.push(d);sel=[d.id];render();toast('New paint layer added to '+skus[cur].sku);return d.id}
+    const d={id:uid(),name:'Paint layer',type:'image',img:key,x:0,y:0,width:W,height:H};extrasTarget().push(d);sel=[d.id];render();toast('New paint layer added to '+skus[cur].sku);return d.id}
   toast('Select an image layer first, like the Product image, or add an image.');return null}
 function commitRaster(id,C){const key='px_'+uid();IMG[key]=C;assetNames[key]=(effMap[id]&&effMap[id].name)||'Edited image';
   if(effMap[id].slot==='image')skus[cur].img=key;else setProps(id,{img:key});render()}
 /* selection overlay & brush cursor */
+let antsPhase=0,antsEdges=null,antsInfo=null,antsK=1,antsCanvas=null,antsTimer=null;
+function computeEdges(mask){const w=mask.width,h=mask.height,a=mask.getContext('2d').getImageData(0,0,w,h).data,out=[];
+  const on=(x,y)=>x>=0&&y>=0&&x<w&&y<h&&a[(y*w+x)*4+3]>127;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(!on(x,y))continue;if(!on(x-1,y)||!on(x+1,y)||!on(x,y-1)||!on(x,y+1))out.push(y*w+x)}
+  return Int32Array.from(out)}
+function drawAnts(){if(!antsEdges||!antsCanvas)return;const w=antsCanvas.width,h=antsCanvas.height,c=antsCanvas.getContext('2d'),img=c.createImageData(w,h),d=img.data,k=antsK;
+  for(let n=0;n<antsEdges.length;n++){const idx=antsEdges[n],x=idx%w,y=(idx-x)/w,blk=((Math.floor((x+y)/(4*k))+antsPhase)&1)?0:255;
+    for(let dy=0;dy<k;dy++){const yy=y+dy-(k>>1);if(yy<0||yy>=h)continue;for(let dx=0;dx<k;dx++){const xx=x+dx-(k>>1);if(xx<0||xx>=w)continue;const i=(yy*w+xx)*4;d[i]=d[i+1]=d[i+2]=blk;d[i+3]=255}}}
+  c.putImageData(img,0,0);selOv.image(antsCanvas);ui.batchDraw()}
+function antsScale(info){return Math.max(1,Math.ceil(1.4/(stage.scaleX()*info.im.width()/info.nw)))}
 function updateSelOverlay(){if(!selOv){selOv=new Konva.Image({listening:false,visible:false});ui.add(selOv)}
   const info=pixSel&&effMap[pixSel.id]&&imgInfo(pixSel.id);
-  if(!info||pixSel.mask.width!==info.nw){if(pixSel&&!info)pixSel=null;selOv.visible(false);ui.batchDraw();return}
-  const t=blank(pixSel.mask),tc=t.getContext('2d');tc.fillStyle='rgba(37,99,235,.38)';tc.fillRect(0,0,t.width,t.height);tc.globalCompositeOperation='destination-in';tc.drawImage(pixSel.mask,0,0);
+  if(!info||pixSel.mask.width!==info.nw){if(pixSel&&!info)pixSel=null;selOv.visible(false);antsEdges=null;clearInterval(antsTimer);antsTimer=null;ui.batchDraw();return}
+  antsEdges=computeEdges(pixSel.mask);antsInfo=info;antsK=antsScale(info);antsCanvas=blank(pixSel.mask);
   const m=stage.getAbsoluteTransform().copy().invert().multiply(info.im.getAbsoluteTransform()).decompose();
-  selOv.setAttrs({image:t,x:m.x,y:m.y,rotation:m.rotation,scaleX:m.scaleX,scaleY:m.scaleY,skewX:m.skewX,skewY:m.skewY,width:info.im.width(),height:info.im.height(),visible:true});selOv.moveToTop();ui.batchDraw()}
+  selOv.setAttrs({x:m.x,y:m.y,rotation:m.rotation,scaleX:m.scaleX,scaleY:m.scaleY,skewX:m.skewX,skewY:m.skewY,width:info.im.width(),height:info.im.height(),visible:true});selOv.moveToTop();
+  drawAnts();if(!antsTimer)antsTimer=setInterval(()=>{if(!pixSel||!selOv.visible()){clearInterval(antsTimer);antsTimer=null;return}
+    const k=antsScale(antsInfo);if(k!==antsK)antsK=k;antsPhase=(antsPhase+1)&1023;drawAnts()},140)}
 function updateBrushCursor(ev){if(!brushCur){brushCur=new Konva.Circle({stroke:'#111',strokeWidth:1,strokeScaleEnabled:false,listening:false,visible:false,dash:[3,2]});ui.add(brushCur)}
   const on=['brush','eraser','clone'].includes(tool)&&mouseDoc&&stage.container().contains(ev.target);
   brushCur.visible(!!on);if(on)brushCur.setAttrs({x:mouseDoc.x,y:mouseDoc.y,radius:topt.size/2});ui.batchDraw()}
@@ -855,7 +1088,7 @@ function gradientDown(e,p){let id=sel.length===1?sel[0]:targetAt(e);if(id&&isLoc
         g.addColorStop(0,fg);g.addColorStop(1,c2);tc.fillStyle=g;tc.fillRect(0,0,t.width,t.height);if(pixSel&&pixSel.id===id){tc.globalCompositeOperation='destination-in';tc.drawImage(pixSel.mask,0,0)}
         B.getContext('2d').drawImage(t,0,0);commitRaster(id,B);return}
       snapshot();const c=blankSize(W,H),cc=c.getContext('2d'),g=cc.createLinearGradient(p.x,p.y,q.x,q.y);g.addColorStop(0,fg);g.addColorStop(1,c2);cc.fillStyle=g;cc.fillRect(0,0,W,H);
-      const key='px_'+uid();IMG[key]=c;assetNames[key]='Gradient';const nd={id:uid(),name:'Gradient',type:'image',img:key,x:0,y:0,width:W,height:H};skus[cur].extras.push(nd);sel=[nd.id];render();toast('Gradient layer added')}};
+      const key='px_'+uid();IMG[key]=c;assetNames[key]='Gradient';const nd={id:uid(),name:'Gradient',type:'image',img:key,x:0,y:0,width:W,height:H};extrasTarget().push(nd);sel=[nd.id];render();toast('Gradient layer added')}};
 }
 function shapeDown(p){const kind=topt.shape,isLine=kind==='line'||kind==='arrow';
   const gh=isLine?new Konva.Line({points:[p.x,p.y,p.x,p.y],stroke:fg,strokeWidth:topt.lineW,listening:false}):new Konva.Rect({x:p.x,y:p.y,stroke:'#2563eb',dash:[4,3],strokeWidth:1,strokeScaleEnabled:false,fill:hexA(fg,.35),listening:false,cornerRadius:kind==='ellipse'?9999:kind==='rounded'?topt.radius:0});
@@ -866,7 +1099,7 @@ function shapeDown(p){const kind=topt.shape,isLine=kind==='line'||kind==='arrow'
     up:()=>{gh.destroy();ui.batchDraw();const w=Math.abs(q.x-p.x),h=Math.abs(q.y-p.y);if(Math.max(w,h)<4)return;snapshot();let d;
       if(isLine)d={id:uid(),name:kind==='arrow'?'Arrow':'Line',type:'line',x:R(p.x),y:R(p.y),points:[0,0,R(q.x-p.x),R(q.y-p.y)],stroke:fg,strokeWidth:topt.lineW,arrow:kind==='arrow'};
       else d={id:uid(),name:kind==='ellipse'?'Ellipse':kind==='rounded'?'Rounded rectangle':'Rectangle',type:kind==='ellipse'?'ellipse':'rect',x:R(Math.min(p.x,q.x)),y:R(Math.min(p.y,q.y)),width:R(w),height:R(h),fill:fg,cornerRadius:kind==='rounded'?R(Math.min(topt.radius,w/2,h/2)):0};
-      skus[cur].extras.push(d);sel=[d.id];render()}}}
+      extrasTarget().push(d);sel=[d.id];render()}}}
 /* effects panel */
 function fxHtml(d){const fx=d.fx||{},sh={...FX_DEF.shadow,...(fx.shadow||{})},sk={...FX_DEF.stroke,...(fx.stroke||{})},strokeable=['text','rect','ellipse'].includes(d.type);
   return`<div class="sec">Effects</div>`+
@@ -926,7 +1159,8 @@ async function doExport(){
   if(!zs.length){$('#exErr').textContent='Pick at least one size.';return}
   if(!pat.trim()){$('#exErr').textContent='Enter a file name pattern, for example {sku}_{size}.';return}
   if(!dl&&window.claude&&claude.use){try{dl=await Promise.race([claude.use('downloads'),new Promise(r=>setTimeout(()=>r(null),3000))])}catch(e){}}
-  if(!dl)dl={save:async({filename,data})=>{const u=URL.createObjectURL(data instanceof Blob?data:new Blob([data])),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);return{status:'saved'}}};
+  if(!dl)dl=fallbackDl();
+  if(false)dl={save:async({filename,data})=>{const u=URL.createObjectURL(data instanceof Blob?data:new Blob([data])),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);return{status:'saved'}}};
   exBusy=true;$('#exGo').disabled=true;const files=[],used={};let n=0,over=0;
   try{
     for(const i of ps)for(const z of zs){n++;$('#exSum').textContent='Rendering '+n+' of '+ps.length*zs.length+'…';await new Promise(r=>setTimeout(r,0));
@@ -969,7 +1203,7 @@ function drawRuler(cv,horiz){
 }
 let mouseDoc=null,lastT='';
 function rulerLoop(){const t=[stage.x(),stage.y(),stage.scaleX(),stage.width(),stage.height(),mouseDoc&&mouseDoc.x,mouseDoc&&mouseDoc.y].join();
-  if(t!==lastT){lastT=t;drawRuler($('#rulerT'),true);drawRuler($('#rulerL'),false)}requestAnimationFrame(rulerLoop)}
+  if(t!==lastT){lastT=t;drawRuler($('#rulerT'),true);drawRuler($('#rulerL'),false);positionCtx()}requestAnimationFrame(rulerLoop)}
 function startGuide(e,axis){e.preventDefault();hideHint();guideDrag={axis,pos:null}}
 function moveGuide(ev){
   stage.setPointersPositions(ev);const p=stage.getRelativePointerPosition();
@@ -983,11 +1217,144 @@ function endGuide(){if(!guideDrag)return;const g=guideDrag;guideDrag=null;
   if(g.pos!=null){(g.axis==='h'?guides.h:guides.v).push(g.pos);if(!showGuides){showGuides=true;guideGroup.visible(true)}toast((g.axis==='h'?'Horizontal':'Vertical')+' guide at '+g.pos+'px. Ctrl+; hides guides; double-click the ruler corner to clear them.')}
   drawGuides()}
 
+/* ---------- Home, campaigns, layouts, products, autosave ---------- */
+const SAMPLE_BASE=clone(base),SAMPLE_SKUS=clone(skus);
+let store={layouts:[],campaigns:[]},openDoc=null,legacyWork=null,saveT=null,storageOk=true;
+const now=()=>Date.now(),fmtDate=t=>new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+function blankSku(name,img){return{sku:name,name,img:img||'washer',values:{},overrides:{},extras:[]}}
+function starterLayout(){return[{id:'bg',name:'Background',type:'rect',x:0,y:0,width:W,height:H,fill:'#ffffff',locked:true},
+  {id:uid(),name:'Product name',type:'text',slot:'name',x:100,y:70,width:1000,height:140,text:'',fontSize:64,fontStyle:'800',fill:'#141414',align:'center',lineHeight:1.1,autoFit:true},
+  {id:uid(),name:'Product image',type:'image',slot:'image',x:150,y:260,width:900,height:820}]}
+function thumbFor(b,s){try{offLayer.destroyChildren();effectiveOf(b,s).forEach(d=>offLayer.add(build(d)));offLayer.draw();return off.toDataURL({pixelRatio:1,mimeType:'image/jpeg',quality:.8})}catch(e){return''}}
+function seedStore(){
+  store.layouts.push({id:'lay_sample',name:'11.11 Template (sample)',base:clone(SAMPLE_BASE),sampleName:'Product name here',sampleImg:'washer',updatedAt:now()});
+  store.campaigns.push({id:'camp_sample',name:'11.11 OE (sample)',layoutId:'lay_sample',base:clone(SAMPLE_BASE),skus:clone(SAMPLE_SKUS).map(s=>({values:{},...s})),updatedAt:now()});
+  if(legacyWork&&legacyWork.base){Object.assign(assets,legacyWork.assets||{});Object.assign(assetNames,legacyWork.assetNames||{});
+    store.campaigns.unshift({id:'camp_'+uid(),name:'My earlier work',layoutId:'lay_sample',base:legacyWork.base,skus:legacyWork.skus.map(s=>({values:{},...s})),updatedAt:now()})}
+}
+async function loadStore(){let rec=null;try{rec=await idbReq('readonly',st=>st.get('main'),'kv')}catch(e){storageOk=false}
+  if(rec&&rec.layouts){store={layouts:rec.layouts,campaigns:rec.campaigns};Object.assign(assets,rec.assets||{});Object.assign(assetNames,rec.assetNames||{})}else seedStore()}
+function commitOpen(){if(!openDoc)return;
+  if(openDoc.kind==='campaign'){const c=store.campaigns.find(x=>x.id===openDoc.id);if(c){c.base=base;c.skus=skus;c.updatedAt=now();c.thumb=thumbFor(base,skus[0])}}
+  else{const l=store.layouts.find(x=>x.id===openDoc.id);if(l){const s0=skus[0];
+    if(s0.extras.length){base.push(...s0.extras.map(e=>{delete e.extra;return e}));s0.extras=[]}
+    Object.entries(s0.overrides).forEach(([id,o])=>{const f=findIn(base,id);if(f)Object.assign(f.d,o)});s0.overrides={};
+    l.base=base;l.sampleName=s0.name;l.sampleImg=s0.img;l.updatedAt=now();l.thumb=thumbFor(base,s0)}}}
+function usedAssetKeys(){const keys=new Set();const scan=arr=>walk(arr,d=>{if(d.img)keys.add(d.img)});
+  store.layouts.forEach(l=>{scan(l.base);keys.add(l.sampleImg)});store.campaigns.forEach(c=>{scan(c.base);c.skus.forEach(s=>{keys.add(s.img);scan(s.extras);Object.values(s.overrides).forEach(o=>{if(o.img)keys.add(o.img);if(o.children)scan(o.children)})})});return keys}
+async function persistNow(loud){clearTimeout(saveT);saveT=null;commitOpen();
+  const keys=usedAssetKeys(),out={};keys.forEach(k=>{if(!k||ART[k])return;if(!assets[k]&&IMG[k]&&IMG[k].toDataURL)try{assets[k]=IMG[k].toDataURL()}catch(e){}if(assets[k])out[k]=assets[k]});
+  const names={};Object.keys(out).forEach(k=>names[k]=assetNames[k]);
+  try{await idbReq('readwrite',st=>st.put({layouts:store.layouts,campaigns:store.campaigns,assets:out,assetNames:names,savedAt:now()},'main'),'kv');storageOk=true;
+    $('#saveState').textContent='Saved '+new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});if(loud)toast('Saved in this browser')}
+  catch(e){storageOk=false;$('#saveState').textContent='Not saved';if(loud)toast('This view can’t save. Your live EM Tool link saves automatically.')}}
+function queueSave(){$('#saveState').textContent='Saving…';clearTimeout(saveT);saveT=setTimeout(()=>persistNow(false),900)}
+function showHome(){if(openDoc){commitOpen();persistNow(false)}openDoc=null;applyAll=false;document.body.classList.add('home');document.body.classList.remove('lay');closeDialogs();renderHome()}
+function card(img,name,meta,acts,openAct){return`<div class="card"><div class="th" data-act="${openAct}">${img?`<img src="${img}" alt="">`:'<span class="muted">No preview</span>'}</div><div class="bd"><div class="nm2" title="${esc(name)}">${esc(name)}</div><div class="muted" style="font-size:12px">${meta}</div><div class="acts">${acts}</div></div></div>`}
+function renderHome(){
+  const cs=[...store.campaigns].sort((a,b)=>b.updatedAt-a.updatedAt),ls=[...store.layouts].sort((a,b)=>b.updatedAt-a.updatedAt);
+  $('#campGrid').innerHTML=cs.length?cs.map(c=>{if(!c.thumb)c.thumb=thumbFor(c.base,c.skus[0]);return`<div data-id="${c.id}" data-kind="c">`+card(c.thumb,c.name,`${c.skus.length} product${c.skus.length===1?'':'s'} · ${fmtDate(c.updatedAt)}`,
+    '<button data-act="open" class="pri">Open</button><button data-act="dup">Duplicate</button><button data-act="ren">Rename</button><button data-act="del">Delete</button>','open')+'</div>'}).join(''):'<div class="empty" style="grid-column:1/-1">No campaigns yet. Click <b>+ New campaign</b> to start one from a layout.</div>';
+  $('#layGrid').innerHTML=ls.length?ls.map(l=>{if(!l.thumb)l.thumb=thumbFor(l.base,blankSku(l.sampleName||'Product name',l.sampleImg));return`<div data-id="${l.id}" data-kind="l">`+card(l.thumb,l.name,'Updated '+fmtDate(l.updatedAt),
+    '<button data-act="newc" class="pri">New campaign</button><button data-act="edit">Edit</button><button data-act="dup">Duplicate</button><button data-act="ren">Rename</button><button data-act="del">Delete</button>','edit')+'</div>'}).join(''):'<div class="empty" style="grid-column:1/-1">No layouts yet. Click <b>+ New layout</b>.</div>';
+}
+function openEditor(kind,id){
+  const rec=kind==='campaign'?store.campaigns.find(x=>x.id===id):store.layouts.find(x=>x.id===id);if(!rec)return;
+  openDoc={kind,id};base=rec.base;skus=kind==='campaign'?rec.skus:[blankSku(rec.sampleName||'Product name here',rec.sampleImg||'washer')];
+  skus.forEach(s=>{s.values=s.values||{};s.overrides=s.overrides||{};s.extras=s.extras||[]});
+  if(!skus.length)skus.push(blankSku('SKU-1'));
+  applyAll=kind==='layout';cur=0;sel=[];hist=[];fut=[];pixSel=null;cancelCrop(true);
+  document.body.classList.remove('home');document.body.classList.toggle('lay',kind==='layout');
+  $('#docName').textContent=(kind==='layout'?'Layout: ':'')+rec.name;
+  requestAnimationFrame(()=>{const box=$('#wrap');stage.size({width:box.clientWidth-20,height:box.clientHeight-20});render();fit();renderStrip()});
+}
+/* ask dialog (rename / confirm) */
+let askCb=null;
+function ask(title,text,val,okLabel,cb,danger){$('#askTitle').textContent=title;$('#askText').textContent=text||'';const i=$('#askIn');i.style.display=val==null?'none':'block';i.value=val||'';$('#askErr').textContent='';
+  const y=$('#askYes');y.textContent=okLabel||'OK';y.style.background=danger?'#b91c1c':'';askCb=cb;$('#askDlg').style.display='flex';if(val!=null)setTimeout(()=>{i.focus();i.select()},0)}
+function askOk(){const v=$('#askIn').value.trim();if($('#askIn').style.display!=='none'&&!v){$('#askErr').textContent='Enter a name.';return}const cb=askCb;$('#askDlg').style.display='none';askCb=null;cb&&cb(v)}
+function closeDialogs(){['askDlg','ncDlg','prodDlg'].forEach(x=>$('#'+x).style.display='none')}
+function homeAction(kind,id,act){
+  const list=kind==='c'?store.campaigns:store.layouts,rec=list.find(x=>x.id===id);if(!rec)return;
+  if(act==='open')return openEditor('campaign',id);if(act==='edit')return openEditor('layout',id);
+  if(act==='newc')return openNewCampaign(id);
+  if(act==='dup'){const cp=clone(rec);cp.id=(kind==='c'?'camp_':'lay_')+uid();cp.name=rec.name+' (copy)';cp.updatedAt=now();list.push(cp);persistNow(false);renderHome();toast('Duplicated');return}
+  if(act==='ren')return ask('Rename','',rec.name,'Rename',v=>{rec.name=v;rec.updatedAt=now();persistNow(false);renderHome()});
+  if(act==='del')return ask('Delete "'+rec.name+'"?',kind==='c'?'This removes the campaign and its products. It can’t be undone.':'This removes the layout. Campaigns already made from it keep their own copy.',null,'Delete',()=>{list.splice(list.indexOf(rec),1);persistNow(false);renderHome();toast('Deleted')},true);
+}
+/* new campaign */
+let ncLayout=null;
+function openNewCampaign(layId){
+  if(!store.layouts.length)return toast('Create a layout first.');
+  ncLayout=layId||ncLayout||store.layouts[0].id;if(!store.layouts.some(l=>l.id===ncLayout))ncLayout=store.layouts[0].id;
+  $('#ncLayouts').innerHTML=store.layouts.map(l=>`<label class="${l.id===ncLayout?'on':''}" data-lid="${l.id}"><img src="${l.thumb||thumbFor(l.base,blankSku(l.sampleName||'',l.sampleImg))}" alt="">${esc(l.name)}</label>`).join('');
+  $('#ncName').value='New campaign';$('#ncSheet').value='';$('#ncPhotos').value='';$('#ncPhotoN').textContent='';$('#ncErr').textContent='';ncUpd();$('#ncDlg').style.display='flex';setTimeout(()=>{$('#ncName').focus();$('#ncName').select()},0)}
+function ncUpd(){const m=document.querySelector('input[name=ncStart]:checked').value;$('#ncFiles').style.display=m==='empty'?'none':'block';$('#ncSheetRow').style.display=m==='sheet'?'block':'none';
+  $('#ncPhotoRow').firstChild.textContent=m==='sheet'?'Photos (optional, matched by file name or SKU): ':'Photos: '}
+async function ncCreate(){
+  const name=$('#ncName').value.trim(),m=document.querySelector('input[name=ncStart]:checked').value,lay=store.layouts.find(l=>l.id===ncLayout);
+  if(!name){$('#ncErr').textContent='Enter a campaign name.';return}if(!lay){$('#ncErr').textContent='Pick a layout.';return}
+  const photos=[...$('#ncPhotos').files],sheet=$('#ncSheet').files[0];
+  if(m==='photos'&&!photos.length){$('#ncErr').textContent='Pick one or more product photos, or choose Empty.';return}
+  if(m==='sheet'&&!sheet){$('#ncErr').textContent='Pick a spreadsheet (Excel or CSV).';return}
+  $('#ncGo').disabled=true;$('#ncErr').textContent='';
+  try{const b=clone(lay.base);let list=[];
+    if(m==='empty')list=[blankSku('SKU-1',lay.sampleImg)];
+    else{const r=await importProducts(b,photos,m==='sheet'?sheet:null,lay.sampleImg);list=r.skus;if(r.note)toast(r.note)}
+    if(!list.length){$('#ncErr').textContent='No products found in that file. It needs a SKU column.';return}
+    const c={id:'camp_'+uid(),name,layoutId:lay.id,base:b,skus:list,updatedAt:now()};store.campaigns.push(c);closeDialogs();openEditor('campaign',c.id);persistNow(false)}
+  catch(e){$('#ncErr').textContent=e&&e.message?e.message:'Couldn’t read that file.'}
+  finally{$('#ncGo').disabled=false}}
+/* product import */
+const normKey=s=>String(s||'').toLowerCase().trim().replace(/\.[a-z0-9]{2,5}$/,'').replace(/[^a-z0-9]+/g,'');
+async function photoMap(files){const map={};for(const f of files){try{const k=await readImage(f);map[normKey(f.name)]=k}catch(e){}}return map}
+function parseCSV(t){t=t.replace(/^﻿/,'');const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===','||c===';'||c==='\t'){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f=''}else f+=c}
+  if(f!==''||row.length){row.push(f);rows.push(row)}return rows.filter(r=>r.some(x=>String(x).trim()!==''))}
+async function readSheet(file){
+  if(/\.csv$/i.test(file.name))return parseCSV(await file.text());
+  if(!window.XLSX){try{await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')}catch(e){throw new Error('Couldn’t load the Excel reader. Save the sheet as CSV and try again.')}}
+  const wb=XLSX.read(await file.arrayBuffer(),{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]];return XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false})}
+function textSlots(b){const out=[];walk(b,d=>{if(d.slot==='text')out.push(d)});return out}
+async function importProducts(b,photos,sheet,fallbackImg){
+  const pm=await photoMap(photos||[]);let note='';
+  if(!sheet)return{skus:Object.entries(pm).map(([k,img])=>{const nm=assetNames[img]||k;return blankSku(nm,img)})};
+  const rows=await readSheet(sheet);if(rows.length<2)return{skus:[]};
+  const hdr=rows[0].map(h=>String(h).toLowerCase().trim()),col=(...names)=>hdr.findIndex(h=>names.includes(h));
+  const cSku=col('sku','sku code','model','code','item'),cName=col('product name','name','title','product'),cImg=col('image file','image','photo','file','filename','image filename');
+  if(cSku<0)throw new Error('The spreadsheet needs a column called SKU.');
+  const slots=textSlots(b).map(d=>({d,c:hdr.indexOf(String(d.name).toLowerCase().trim())})).filter(x=>x.c>=0);
+  let missing=0;const list=rows.slice(1).filter(r=>String(r[cSku]||'').trim()).map(r=>{const sku=String(r[cSku]).trim(),name=cName>=0&&String(r[cName]).trim()?String(r[cName]).trim():sku;
+    const img=(cImg>=0&&pm[normKey(r[cImg])])||pm[normKey(sku)]||null;if(!img)missing++;
+    const s=blankSku(sku,img||fallbackImg);s.name=name;slots.forEach(({d,c})=>{if(String(r[c]).trim())s.values[d.id]=String(r[c])});return s});
+  if(missing)note=`${missing} product${missing===1?' has':'s have'} no matching photo yet — use Products → Change photo, or add photos named like the SKU.`;
+  return{skus:list,note}}
+function templateCSV(b){const slots=textSlots(b).map(d=>d.name);const head=['SKU','Product name','Image file',...slots];
+  const ex=[['14Z95U-White','14" Laptop Anti-Glare IPS Display - Silver','14Z95U-White.png',...slots.map(()=>'')],['FV1285S4W','8.5kg Front Load Washer with Steam','FV1285S4W.jpg',...slots.map(()=>'')]];
+  return[head,...ex].map(r=>r.map(v=>/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v).join(',')).join('\r\n')}
+function fallbackDl(){return{save:async({filename,data})=>{const u=URL.createObjectURL(data instanceof Blob?data:new Blob([data])),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);return{status:'saved'}}}}
+async function saveFile(name,blob){let d=dl;if(!d&&window.claude&&claude.use){try{d=await Promise.race([claude.use('downloads'),new Promise(r=>setTimeout(()=>r(null),3000))])}catch(e){}}
+  try{await (d||fallbackDl()).save({filename:name,data:blob});toast('Downloaded '+name)}catch(e){if(!(e&&e.code==='declined'))toast('Couldn’t download '+name)}}
+function downloadTemplate(b){saveFile('em-tool-products-template.csv',new Blob(['﻿'+templateCSV(b)],{type:'text/csv'}))}
+/* products dialog */
+let changeIdx=-1;
+function openProducts(){renderProdList();$('#prodDlg').style.display='flex'}
+function imgSrc(k){return ART[k]||assets[k]||(IMG[k]&&IMG[k].toDataURL?(()=>{try{return IMG[k].toDataURL()}catch(e){return''}})():'')}
+function renderProdList(){$('#prList').innerHTML=skus.map((s,i)=>`<div class="prow" data-i="${i}"><img src="${imgSrc(s.img)}" alt=""><input data-f="sku" value="${esc(s.sku)}" title="SKU"><input data-f="name" value="${esc(s.name)}" title="Product name"><button data-pa="photo">Change photo</button><button data-pa="del" title="Remove product">✕</button></div>`).join('')}
+async function addProducts(list){if(!list.length)return toast('No products found.');snapshot();skus.push(...list);cur=skus.length-list.length;sel=[];render();renderStrip();renderProdList();toast(`Added ${list.length} product${list.length===1?'':'s'}`)}
+
+function setSlot(id,on){const f=findIn(base,id);if(!f)return toast('Only layout layers can change per product.');const d=f.d,e=effMap[id];snapshot();
+  if(!on){if(d.slot==='image')d.img=e.img;else d.text=e.text;delete d.slot;toast('This layer is now the same on every product')}
+  else if(d.type==='image'){walk(base,x=>{if(x.slot==='image'){x.img=x.img||skus[cur].img;delete x.slot}});d.slot='image';toast('Each product now shows its own photo here')}
+  else{let hasName=false;walk(base,x=>{if(x.slot==='name')hasName=true});d.slot=hasName?'text':'name';if(d.slot==='text')skus.forEach(s=>{s.values=s.values||{};if(s.values[id]==null)s.values[id]=d.text});toast(d.slot==='name'?'This text is now the product name':'Each product can now have its own text here')}
+  render();renderStrip()}
+
 /* ---------- misc ---------- */
 let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600)}
 function hideHint(){$('#focushint').style.display='none'}
-function save(){Object.keys(IMG).forEach(k=>{if(k.startsWith('px_')&&!assets[k])try{assets[k]=IMG[k].toDataURL()}catch(e){}});try{localStorage.setItem('tf-proto',JSON.stringify({base,skus,assets,assetNames}));toast('Saved in this browser')}catch(e){toast('Saved for this session (this preview can’t keep data)')}}
-function load(){try{const s=localStorage.getItem('tf-proto');if(s){const o=JSON.parse(s);base=o.base;skus=o.skus;assets=o.assets||{};assetNames=o.assetNames||{}}}catch(e){}}
+function save(){persistNow(true)}
+function load(){try{const s=localStorage.getItem('tf-proto');if(s){const o=JSON.parse(s);legacyWork=o;fontStore=o.fonts||[]}}catch(e){}}
 function loadAssets(){return Promise.all(Object.entries(assets).map(([k,src])=>new Promise(res=>{const i=new Image();i.onload=()=>{IMG[k]=i;res()};i.onerror=res;i.src=src})))}
 const SC=[['Ctrl + click','Select the exact layer under the cursor, even inside a group'],['Shift + click','Add or remove a layer from the selection'],['Drag on an empty spot','Draw a box to select every layer it touches (Shift adds, Ctrl picks layers inside groups)'],['Alt + drag','Duplicate and drag the copy'],['Shift + drag','Move in a straight line; keep proportions when resizing'],['Alt + resize handle','Resize from the centre (add Shift to keep proportions)'],['Ctrl + Alt + T','Free transform with rotation (Ctrl+T is kept by the browser). Enter confirms, Esc cancels'],['Arrow / Shift + Arrow','Nudge 1px / 10px'],['Ctrl + J','Duplicate layer'],['Ctrl + G / Ctrl + Shift + G','Group / ungroup'],['Ctrl + [ / ]','Move layer down / up (add Shift for bottom / top)'],['Ctrl + Z / Ctrl + Shift + Z / Ctrl + Y','Undo / redo'],['Space + drag','Pan'],['Ctrl + + / − / 0 / 1','Zoom in / out / fit / 100%'],['Alt + scroll or Ctrl + scroll','Zoom at the cursor'],['Ctrl + ; / Ctrl + \'','Guides / grid on or off'],['Hold Ctrl while dragging','Turn snapping off'],['Drag from a ruler','Pull out a guide (layers snap to it); double-click the ruler corner to clear guides'],['Delete / Backspace','Delete layer (hides it if you are editing one product)'],['V / T','Move tool / text tool'],['Ctrl + A / Ctrl + D','Select all / deselect'],['Ctrl + S','Save'],['Ctrl + Alt + Shift + W','Export images (sizes, file type, quality, file names)'],['Ctrl + V','Paste an image as a new layer (or drag image files onto the canvas, or use Add image)'],['Double-click text','Edit text; Enter to finish, Shift+Enter for a new line, Esc to cancel'],['?','This list']];
 function openModal(){$('#sctable').innerHTML=SC.map(([k,v])=>`<tr><td>${k.split(' / ').map(x=>x.split(' + ').map(y=>`<span class="kbd">${esc(y)}</span>`).join(' + ')).join(' / ')}</td><td>${esc(v)}</td></tr>`).join('');$('#modal').style.display='flex'}
@@ -1025,8 +1392,60 @@ function wire(){
   wrap.addEventListener('dragover',e=>{e.preventDefault();wrap.style.outline='3px dashed #2563eb';wrap.style.outlineOffset='-6px'});
   wrap.addEventListener('dragleave',()=>{wrap.style.outline=''});
   wrap.addEventListener('drop',e=>{e.preventDefault();wrap.style.outline='';hideHint();if(!e.dataTransfer.files.length)return;stage.setPointersPositions(e);addImages(e.dataTransfer.files,stage.getRelativePointerPosition())});
-  document.addEventListener('paste',e=>{if(typing(e.target))return;const fs=[...(e.clipboardData?.items||[])].filter(i=>i.kind==='file').map(i=>i.getAsFile()).filter(Boolean);if(fs.length){e.preventDefault();addImages(fs)}});
+  document.addEventListener('paste',e=>{if(typing(e.target)||document.body.classList.contains('home'))return;const fs=[...(e.clipboardData?.items||[])].filter(i=>i.kind==='file').map(i=>i.getAsFile()).filter(Boolean);if(fs.length){e.preventDefault();addImages(fs)}});
   $('#toolsBtn').onclick=()=>setToolsOn(!toolsOn);
+  $('#homeBtn').onclick=showHome;
+  $('#docName').onclick=()=>{if(!openDoc)return;const list=openDoc.kind==='campaign'?store.campaigns:store.layouts,rec=list.find(x=>x.id===openDoc.id);ask('Rename','',rec.name,'Rename',v=>{rec.name=v;$('#docName').textContent=(openDoc.kind==='layout'?'Layout: ':'')+v;queueSave()})};
+  $('#home').addEventListener('click',e=>{const b=e.target.closest('[data-act]');const w=e.target.closest('[data-id]');if(!b||!w)return;homeAction(w.dataset.kind,w.dataset.id,b.dataset.act)});
+  $('#newCampBtn').onclick=()=>openNewCampaign();
+  $('#newLayBtn').onclick=()=>ask('New layout','Starts as a blank 1200×1200 canvas with a product name and product photo that change per product.','New layout','Create',v=>{const l={id:'lay_'+uid(),name:v,base:starterLayout(),sampleName:'Product name here',sampleImg:'washer',updatedAt:now()};store.layouts.push(l);openEditor('layout',l.id);persistNow(false)});
+  $('#askYes').onclick=askOk;$('#askNo').onclick=()=>{$('#askDlg').style.display='none'};$('#askIn').addEventListener('keydown',e=>{if(e.key==='Enter')askOk()});
+  ['ncClose','ncCancel'].forEach(x=>$('#'+x).onclick=()=>{$('#ncDlg').style.display='none'});$('#ncGo').onclick=ncCreate;
+  document.querySelectorAll('input[name=ncStart]').forEach(r=>r.onchange=()=>{$('#ncErr').textContent='';ncUpd()});
+  $('#ncLayouts').addEventListener('click',e=>{const l=e.target.closest('[data-lid]');if(!l)return;ncLayout=l.dataset.lid;$('#ncLayouts').querySelectorAll('label').forEach(x=>x.classList.toggle('on',x.dataset.lid===ncLayout))});
+  $('#ncPhotos').onchange=e=>{$('#ncPhotoN').textContent=e.target.files.length?e.target.files.length+' photo'+(e.target.files.length===1?'':'s'):'';$('#ncErr').textContent=''};
+  $('#ncTpl').onclick=e=>{e.preventDefault();const l=store.layouts.find(x=>x.id===ncLayout);downloadTemplate(l?l.base:base)};
+  $('#prodBtn').onclick=openProducts;$('#prClose').onclick=()=>{$('#prodDlg').style.display='none';render();renderStrip()};
+  $('#prodDlg').addEventListener('click',e=>{if(e.target.id==='prodDlg'){$('#prodDlg').style.display='none';render();renderStrip()}});
+  $('#prPhotos').onclick=()=>{$('#prPhotoIn').value='';$('#prPhotoIn').click()};
+  $('#prPhotoIn').onchange=async e=>{const r=await importProducts(base,[...e.target.files],null,skus[0]&&skus[0].img);addProducts(r.skus)};
+  $('#prSheet').onclick=()=>{$('#prSheetIn').value='';$('#prSheetIn').click()};
+  $('#prSheetIn').onchange=e=>{if(!e.target.files[0])return;toast('Now pick the product photos for this sheet (or Cancel to skip).');$('#prSheetPhotos').value='';
+    const go=async(ph)=>{try{const r=await importProducts(base,ph,$('#prSheetIn').files[0],skus[0]&&skus[0].img);await addProducts(r.skus);if(r.note)toast(r.note)}catch(err){toast(err&&err.message?err.message:'Couldn’t read that spreadsheet.')}};
+    let done=false;$('#prSheetPhotos').onchange=ev=>{if(done)return;done=true;go([...ev.target.files])};
+    window.addEventListener('focus',function f(){window.removeEventListener('focus',f);setTimeout(()=>{if(!done&&!$('#prSheetPhotos').files.length){done=true;go([])}},700)});
+    $('#prSheetPhotos').click()};
+  $('#prTpl').onclick=()=>downloadTemplate(base);
+  $('#prList').addEventListener('change',e=>{const r=e.target.closest('.prow');if(!r)return;const s=skus[+r.dataset.i],f=e.target.dataset.f,v=e.target.value.trim();if(!v){renderProdList();return}snapshot();s[f]=v;render()});
+  $('#prList').addEventListener('click',e=>{const b=e.target.closest('[data-pa]');if(!b)return;const i=+b.closest('.prow').dataset.i;
+    if(b.dataset.pa==='del'){if(skus.length<2)return toast('A campaign needs at least one product.');snapshot();skus.splice(i,1);if(cur>=skus.length)cur=skus.length-1;sel=[];render();renderStrip();renderProdList();return}
+    changeIdx=i;$('#prChangeIn').value='';$('#prChangeIn').click()});
+  $('#prChangeIn').onchange=async e=>{const f=e.target.files[0];if(!f||changeIdx<0)return;try{const k=await readImage(f);snapshot();skus[changeIdx].img=k;render();renderStrip();renderProdList()}catch(err){toast('That file is not an image.')}};
+  $('#ctx').addEventListener('mousedown',e=>e.stopPropagation());
+  $('#ctx').addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(!c)return;c.blur();const a=c.dataset.c;
+    if(a==='aibg')aiRemoveBg();else if(a==='plainbg')removeBg();else if(a==='replace'){$('#replIn').value='';$('#replIn').click()}
+    else if(a==='apply')openApply('sel');else if(a==='dup'){snapshot();duplicateSel()}else if(a==='del')deleteSel()});
+  $('#opts').addEventListener('change',e=>{const k=e.target.dataset.tx;if(!k)return;let v=e.target.value;
+    if(k==='fontFamily'&&v==='__upload'){$('#fontIn').value='';$('#fontIn').click();renderOpts();return}
+    if(k==='fontFamily'&&v==='__manage'){const sel0=e.target;renderOpts();openFontsPop($('#opts select[data-tx=fontFamily]')||sel0);return}
+    if(k==='fontSize'){v=+v;if(!(v>=4&&v<=1000)){toast('Enter a size between 4 and 1000');renderOpts();return}}
+    e.target.blur();applyText({[k]:v})});
+  $('#opts').addEventListener('click',e=>{const b=e.target.closest('[data-ta]');if(!b)return;const a=b.dataset.ta,t=textTarget();b.blur();
+    if(a==='italic')applyText({italic:!t.italic});
+    else if(a.startsWith('align-'))applyText({align:a.slice(6)});
+    else if(a==='vertical')applyText({vertical:!t.vertical});
+    else if(a==='more')openPop(b,'char');else if(a==='warp')openPop(b,'warp');
+    else if(a==='cancel'){if(curEdit)curEdit.finish(false)}else if(a==='commit'){if(curEdit)curEdit.finish(true)}});
+  $('#opts').addEventListener('mousedown',e=>{if(e.target.closest('[data-ta=cancel],[data-ta=commit]'))e.preventDefault()});
+  $('#fontIn').addEventListener('change',e=>{const f=e.target.files[0];if(f)addFontFile(f);e.target.blur()});
+  $('#pop').addEventListener('change',e=>{const k=e.target.dataset.cx;if(!k)return;const t=textTarget();let v=e.target.type==='checkbox'?e.target.checked:e.target.value;
+    if(k==='lineHeight')v=Math.max(.5,Math.min(4,+v/100));else if(k==='letterSpacing')v=+v||0;
+    if(k==='underline'||k==='strike'){const u=k==='underline'?v:(t.textDecoration||'').includes('underline'),st=k==='strike'?v:(t.textDecoration||'').includes('line-through');applyText({textDecoration:[u?'underline':'',st?'line-through':''].filter(Boolean).join(' ')});return}
+    if(k==='warpStyle'){applyText({warp:{style:v,bend:(t.warp&&t.warp.bend)||40}});return}if(k==='warpBend'){applyText({warp:{style:'arc',bend:+v}});return}
+    applyText({[k]:v})});
+  $('#pop').addEventListener('click',e=>{const rm=e.target.dataset.rmfont;if(rm!=null){removeFont(rm);openFontsPop($('#opts select[data-tx=fontFamily]'));if(!fontStore.length)$('#pop').style.display='none';return}if(e.target.hasAttribute('data-upfont')){$('#pop').style.display='none';$('#fontIn').value='';$('#fontIn').click()}});
+  $('#pop').addEventListener('input',e=>{if(e.target.type==='range'){const sp=e.target.parentElement.querySelector('span');if(sp)sp.textContent=e.target.value}});
+  document.addEventListener('mousedown',e=>{const pp=$('#pop');if(pp.style.display==='block'&&!pp.contains(e.target)&&!e.target.closest('[data-ta=more],[data-ta=warp],select[data-tx=fontFamily]'))pp.style.display='none'});
   $('#toolbox').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(b)setTool(b.dataset.t);if(e.target.id==='swFg'){$('#fgIn').value=fg;$('#fgIn').click()}if(e.target.id==='swBg'){$('#bgIn').value=bg;$('#bgIn').click()}});
   $('#fgIn').addEventListener('input',e=>{fg=e.target.value;renderSwatches()});$('#bgIn').addEventListener('input',e=>{bg=e.target.value;renderSwatches()});
   $('#opts').addEventListener('input',e=>{const k=e.target.dataset.o;if(!k)return;topt[k]=e.target.type==='range'||e.target.type==='number'?+e.target.value/(e.target.dataset.div?+e.target.dataset.div:1):e.target.value;const sp=e.target.parentElement.querySelector('span.v');if(sp)sp.textContent=e.target.value});
@@ -1053,17 +1472,18 @@ function wire(){
     else sel=[id];
     renderSel()});
   $('#props').addEventListener('input',e=>{if(e.target.type==='range'&&e.target.dataset.fx){const sp=e.target.parentElement.querySelector('label span');if(sp)sp.textContent=e.target.value}});
-  $('#props').addEventListener('change',e=>{if(e.target.dataset.fx&&sel[0]){changeFx(e.target);return}const p=e.target.dataset.p;if(!p||!sel[0])return;let v=e.target.value;
+  $('#props').addEventListener('change',e=>{if(e.target.id==='slotChk')return;if(e.target.dataset.fx&&sel[0]){changeFx(e.target);return}const p=e.target.dataset.p;if(!p||!sel[0])return;let v=e.target.value;
     if(['x','y','width','height','rotation','fontSize','strokeWidth'].includes(p))v=+v;
     snapshot();
     if(p==='img'){if(effMap[sel[0]].slot==='image'){skus[cur].img=v}else setProps(sel[0],{img:v})}else setProps(sel[0],{[p]:v});
     render()});
-  $('#props').addEventListener('click',e=>{if(e.target.id==='fxReset'){snapshot();setProps(sel[0],{fx:null});render();return}if(e.target.id==='applySel'){openApply('sel');return}if(e.target.id==='replBtn'){$('#replIn').value='';$('#replIn').click();return}if(e.target.id==='resetOv'){snapshot();delete skus[cur].overrides[sel[0]];render()}});
+  $('#props').addEventListener('change',e=>{if(e.target.id==='slotChk')setSlot(sel[0],e.target.checked)});
+  $('#props').addEventListener('click',e=>{if(e.target.id==='fxReset'){snapshot();setProps(sel[0],{fx:null});render();return}if(e.target.id==='aiBgBtn'){aiRemoveBg();return}if(e.target.id==='plainBgBtn'){removeBg();return}if(e.target.id==='applySel'){openApply('sel');return}if(e.target.id==='replBtn'){$('#replIn').value='';$('#replIn').click();return}if(e.target.id==='resetOv'){snapshot();delete skus[cur].overrides[sel[0]];render()}});
   stage.container().addEventListener('mousedown',()=>{if(document.activeElement&&typing(document.activeElement))document.activeElement.blur()});
 }
 
-load();Promise.all([loadImages(),loadAssets(),document.fonts.load('800 40px Inter'),document.fonts.load('600 40px Inter'),document.fonts.load('400 40px Inter')]).catch(()=>{}).then(()=>{
-  setupStage();wire();try{if(localStorage.getItem('tf-tools')==='1')toolsOn=true}catch(e){}setToolsOn(toolsOn,true);render();fit();drawGuides();rulerLoop();renderStrip();$('#loading').remove();
+load();Promise.all([loadImages(),loadStore().then(loadAssets),loadUserFonts(),document.fonts.load('800 40px Inter'),document.fonts.load('600 40px Inter'),document.fonts.load('400 40px Inter')]).catch(()=>{}).then(()=>{
+  setupStage();wire();try{if(localStorage.getItem('tf-tools')==='1')toolsOn=true}catch(e){}setToolsOn(toolsOn,true);render();fit();drawGuides();rulerLoop();showHome();persistNow(false);$('#loading').remove();
 });
 })();
 </script>
