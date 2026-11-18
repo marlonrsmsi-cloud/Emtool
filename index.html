@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>EM Tool</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f1f1f">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&family=Roboto:ital,wght@0,400;0,700;1,400&family=Oswald:wght@400;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
@@ -311,6 +315,7 @@ body.rzing,body.rzing *{user-select:none}body.rzx,body.rzx *{cursor:col-resize!i
   <input type="file" id="replIn" accept="image/*" hidden>
   <button class="ed" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
   <button class="ed" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
+  <button id="installBtn" class="pri" style="display:none" title="Install EM Tool as an app on this computer">Install app</button>
   <button id="helpBtn" title="All shortcuts (?)" aria-label="Shortcuts">?</button>
 </header>
 <div id="home">
@@ -747,7 +752,7 @@ function structRef(id){return findIn(skus[cur].extras,id)||findIn(base,id)}
 let orderWarned=false;
 function orderNote(ids){if(applyAll||orderWarned)return;if(ids.some(id=>!findIn(skus[cur].extras,id))){orderWarned=true;toast('Layer order and folders are shared, so this changes every product in the campaign. Ctrl+Z undoes it.')}}
 const layerClosed=new Set();
-window.__em={get base(){return base},get skus(){return skus},get sel(){return sel},set sel(v){sel=v},get cur(){return cur},effective:i=>effective(i),nodeById:id=>nodeById(id),catOf:s=>catOf(s),renderSel:()=>renderSel()};
+window.__em={imgURL:k=>{const i=IMG[k];return i&&i.toDataURL?i.toDataURL():''},split:()=>splitLayers(),info:id=>{const i=imgInfo(id);return i&&[i.nw,i.nh]},ref:id=>!!structRef(id),get busy(){return splitBusy},get base(){return base},get skus(){return skus},get sel(){return sel},set sel(v){sel=v},get cur(){return cur},effective:i=>effective(i),nodeById:id=>nodeById(id),catOf:s=>catOf(s),renderSel:()=>renderSel()};
 function baseFloor(a){let f=0;if(a===base)while(f<a.length&&a[f].locked)f++;return f}
 function moveLayers(ids,t){
   ids=ids.filter(id=>effMap[id]);if(!ids.length||!t)return;
@@ -1086,6 +1091,16 @@ function renderStrip(){
   if(lastStripCur!==cur){lastStripCur=cur;requestAnimationFrame(()=>{const F=document.querySelector('footer'),t=F&&F.querySelector('.thumb.on');if(!t)return;const a=F.getBoundingClientRect(),b=t.getBoundingClientRect(),hd=F.querySelector('.lbl').offsetHeight;if(b.top<a.top+hd||b.bottom>a.bottom)F.scrollTop+=b.top-a.top-hd-10})}
 }
 let lastStripCur=-1;
+/* installable app (like Photopea): offline helper + install button */
+(function(){
+  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)&&!/claude|localhost:87/.test(location.hostname+':'+location.port)){
+    window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
+  let deferred=null;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;const b=document.getElementById('installBtn');if(b&&!standalone)b.style.display=''});
+  window.addEventListener('appinstalled',()=>{deferred=null;const b=document.getElementById('installBtn');if(b)b.style.display='none';try{toast('EM Tool is installed. Open it from the Start menu or taskbar.')}catch(e){}});
+  document.addEventListener('click',async e=>{if(!e.target.closest||!e.target.closest('#installBtn')||!deferred)return;deferred.prompt();try{await deferred.userChoice}catch(_){}deferred=null;e.target.closest('#installBtn').style.display='none'});
+})();
 /* page view: every product of one category on the canvas, like Muse */
 const pageCache=new Map(),PG_GAP=200,PG_LBL=90;
 const catKey=s=>catOf(s)?s.cat:'none';
@@ -1231,11 +1246,240 @@ async function aiRemoveBg(){
   finally{aiBusy=false;renderProps();renderCtx()}
 }
 
+
+/* ---------- Split into layers (like Canva's Magic Grab): flat image -> text + product + background ---------- */
+const TESS_VER='5.1.1',TESS={js:`https://cdn.jsdelivr.net/npm/tesseract.js@${TESS_VER}/dist/tesseract.min.js`,worker:`https://cdn.jsdelivr.net/npm/tesseract.js@${TESS_VER}/dist/worker.min.js`,core:`https://cdn.jsdelivr.net/npm/tesseract.js-core@${TESS_VER}`,lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int'};
+let ocrWorker=null,ocrLoading=null,splitBusy=false;
+async function ocrReady(onProg){
+  if(ocrWorker)return ocrWorker;
+  if(!ocrLoading)ocrLoading=(async()=>{if(!window.Tesseract)await loadScript(TESS.js);
+    return Tesseract.createWorker('eng',1,{workerPath:TESS.worker,corePath:TESS.core,langPath:TESS.lang,logger:m=>{try{splitLog&&splitLog(m)}catch(e){}}})})();
+  try{ocrWorker=await ocrLoading}catch(e){ocrLoading=null;throw e}return ocrWorker}
+let splitLog=null;
+const colDist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+const hex2=v=>('0'+Math.max(0,Math.min(255,Math.round(v))).toString(16)).slice(-2);
+const toHex=c=>'#'+hex2(c[0])+hex2(c[1])+hex2(c[2]);
+function median(a){if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y);return s[s.length>>1]}
+/* collect text lines from Tesseract, drop noise */
+function ocrItems(data,Wp,Hp){
+  const items=[];
+  (data.blocks||[]).forEach(b=>(b.paragraphs||[]).forEach(p=>{let cur=null;
+    (p.lines||[]).forEach(l=>{const ws=(l.words||[]).filter(w=>w.confidence>=55&&/[A-Za-z0-9%$₱&]/.test(w.text)&&w.bbox.y1-w.bbox.y0>=7);
+      if(!ws.length)return;const conf=ws.reduce((s,w)=>s+w.confidence,0)/ws.length;if(conf<62)return;
+      const text=ws.map(w=>w.text).join(' ').replace(/\s+/g,' ').trim();if(!text||text.replace(/[^A-Za-z0-9]/g,'').length<1)return;
+      const bb={x0:Math.min(...ws.map(w=>w.bbox.x0)),y0:Math.min(...ws.map(w=>w.bbox.y0)),x1:Math.max(...ws.map(w=>w.bbox.x1)),y1:Math.max(...ws.map(w=>w.bbox.y1))};
+      if(bb.x1-bb.x0>Wp*.98&&bb.y1-bb.y0>Hp*.5)return;
+      const L={text,bb,h:bb.y1-bb.y0};
+      if(cur){const last=cur.lines[cur.lines.length-1],gap=bb.y0-last.bb.y1,ov=Math.min(bb.x1,cur.bb.x1)-Math.max(bb.x0,cur.bb.x0),hr=Math.max(L.h,last.h)/Math.min(L.h,last.h);
+        if(gap<Math.max(L.h,last.h)*.9&&gap>-L.h*.3&&ov>0&&hr<1.7){cur.lines.push(L);cur.bb={x0:Math.min(cur.bb.x0,bb.x0),y0:cur.bb.y0,x1:Math.max(cur.bb.x1,bb.x1),y1:bb.y1};return}}
+      cur={lines:[L],bb:{...bb}};items.push(cur)})}));
+  return items}
+function ringColour(P,Wp,Hp,bb,r){const xs=[],add=(x,y)=>{if(x<0||y<0||x>=Wp||y>=Hp)return;const i=(y*Wp+x)*4;xs.push([P[i],P[i+1],P[i+2]])};
+  for(let x=bb.x0-r;x<=bb.x1+r;x+=2){add(x,bb.y0-r);add(x,bb.y1+r)}for(let y=bb.y0-r;y<=bb.y1+r;y+=2){add(bb.x0-r,y);add(bb.x1+r,y)}
+  if(!xs.length)return[255,255,255];return[0,1,2].map(k=>median(xs.map(c=>c[k])))}
+/* several quick reading passes find more text than one: original, strongest colour, and "ink maps" */
+function variantCanvases(C,P,Wp,Hp){
+  const out=[];const mk=fn=>{const c=blankSize(Wp,Hp),x=c.getContext('2d'),id=x.createImageData(Wp,Hp);fn(id.data);x.putImageData(id,0,0);return c};
+  out.push({c:C,psm:'12'},{c:C,psm:'3'});
+  out.push({c:mk(o=>{for(let i=0;i<Wp*Hp;i++){const v=Math.max(P[i*4],P[i*4+1],P[i*4+2]);o[i*4]=o[i*4+1]=o[i*4+2]=v;o[i*4+3]=255}}),psm:'12'});
+  // local background = median colour of the neighbourhood (on a 1/4 size copy), ink = far from it
+  const s=4,w=Math.ceil(Wp/s),h=Math.ceil(Hp/s),sm=new Uint8Array(w*h*3);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(Math.min(Hp-1,y*s)*Wp+Math.min(Wp-1,x*s))*4;sm[(y*w+x)*3]=P[i];sm[(y*w+x)*3+1]=P[i+1];sm[(y*w+x)*3+2]=P[i+2]}
+  const bg=new Uint8Array(w*h*3),r=5,buf=new Uint8Array((2*r+1)*(2*r+1));
+  for(let k=0;k<3;k++)for(let y=0;y<h;y++)for(let x=0;x<w;x++){let n=0;for(let yy=Math.max(0,y-r);yy<=Math.min(h-1,y+r);yy++)for(let xx=Math.max(0,x-r);xx<=Math.min(w-1,x+r);xx++)buf[n++]=sm[(yy*w+xx)*3+k];
+    const a=buf.subarray(0,n).sort();bg[(y*w+x)*3+k]=a[n>>1]}
+  const dist=new Float32Array(Wp*Hp);for(let y=0;y<Hp;y++)for(let x=0;x<Wp;x++){const i=(y*Wp+x)*4,j=((Math.min(h-1,(y/s)|0))*w+Math.min(w-1,(x/s)|0))*3;dist[y*Wp+x]=Math.hypot(P[i]-bg[j],P[i+1]-bg[j+1],P[i+2]-bg[j+2])}
+  [[85,'12'],[60,'3']].forEach(([t,psm])=>out.push({c:mk(o=>{for(let i=0;i<Wp*Hp;i++){const v=dist[i]>t?0:255;o[i*4]=o[i*4+1]=o[i*4+2]=v;o[i*4+3]=255}}),psm}));
+  return out}
+function cleanWord(t){return String(t||'').replace(/^[^A-Za-z0-9%$₱#@+]+/,'').replace(/[^A-Za-z0-9%$₱.!?+)]+$/,'').replace(/[)]+$/,m=>t.includes('(')?m:'')}
+function collectWords(data,list){(data.blocks||[]).forEach(b=>(b.paragraphs||[]).forEach(p=>(p.lines||[]).forEach(l=>(l.words||[]).forEach(w=>{
+  const text=cleanWord(w.text),an=text.replace(/[^A-Za-z0-9]/g,'').length,h=w.bbox.y1-w.bbox.y0;
+  if(!text||h<7||w.confidence<60)return;if(an<2&&!(an===1&&w.confidence>=90&&/^[0-9A-Z%]$/.test(text)))return;
+  list.push({text,conf:w.confidence,bb:{...w.bbox}})}))))}
+function dedupeWords(ws){ws.sort((a,b)=>b.conf-a.conf||(b.bb.x1-b.bb.x0)-(a.bb.x1-a.bb.x0));const keep=[];
+  const area=b=>Math.max(1,(b.x1-b.x0)*(b.y1-b.y0)),inter=(a,b)=>Math.max(0,Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0))*Math.max(0,Math.min(a.y1,b.y1)-Math.max(a.y0,b.y0));
+  ws.forEach(w=>{if(keep.some(k=>{const i=inter(k.bb,w.bb);return i/area(w.bb)>.5||i/area(k.bb)>.5}))return;keep.push(w)});return keep}
+/* words -> lines -> segments (split wide gaps) -> blocks (stack lines that belong together) */
+function buildItems(words,P,Wp,Hp){
+  const ws=[...words].sort((a,b)=>(a.bb.y0+a.bb.y1)-(b.bb.y0+b.bb.y1)),lines=[];
+  ws.forEach(w=>{const h=w.bb.y1-w.bb.y0,cy=(w.bb.y0+w.bb.y1)/2;let L=null,bd=1e9;
+    lines.forEach(l=>{const lh=median(l.ws.map(q=>q.bb.y1-q.bb.y0)),lc=median(l.ws.map(q=>(q.bb.y0+q.bb.y1)/2)),dd=Math.abs(cy-lc);
+      const hx=Math.min(...l.ws.map(q=>Math.max(0,q.bb.x0-w.bb.x1,w.bb.x0-q.bb.x1)));
+      if(hx<Math.max(h,lh)*1.2&&dd<Math.max(h,lh)*.4&&Math.max(h,lh)/Math.min(h,lh)<1.8&&dd<bd){bd=dd;L=l}});
+    if(L){L.ws.push(w);L.y0=Math.min(L.y0,w.bb.y0);L.y1=Math.max(L.y1,w.bb.y1)}else lines.push({ws:[w],y0:w.bb.y0,y1:w.bb.y1})});
+  // join pieces of the same row that ended up apart because of the order words were seen
+  for(let changed=true;changed;){changed=false;
+    for(let i=0;i<lines.length&&!changed;i++)for(let j=i+1;j<lines.length&&!changed;j++){const A=lines[i],B=lines[j];
+      const ha=median(A.ws.map(q=>q.bb.y1-q.bb.y0)),hb=median(B.ws.map(q=>q.bb.y1-q.bb.y0)),ca=median(A.ws.map(q=>(q.bb.y0+q.bb.y1)/2)),cb=median(B.ws.map(q=>(q.bb.y0+q.bb.y1)/2));
+      const ax0=Math.min(...A.ws.map(q=>q.bb.x0)),ax1=Math.max(...A.ws.map(q=>q.bb.x1)),bx0=Math.min(...B.ws.map(q=>q.bb.x0)),bx1=Math.max(...B.ws.map(q=>q.bb.x1)),gap=Math.max(0,bx0-ax1,ax0-bx1);
+      if(Math.abs(ca-cb)<Math.max(ha,hb)*.4&&Math.max(ha,hb)/Math.min(ha,hb)<1.8&&gap<Math.max(ha,hb)*1.2){A.ws.push(...B.ws);A.y0=Math.min(A.y0,B.y0);A.y1=Math.max(A.y1,B.y1);lines.splice(j,1);changed=true}}}
+  const segs=[];lines.forEach(l=>{l.ws.sort((a,b)=>a.bb.x0-b.bb.x0);const h=median(l.ws.map(w=>w.bb.y1-w.bb.y0));let cur=null;
+    l.ws.forEach(w=>{if(cur&&w.bb.x0-cur.bb.x1<h*.95){cur.ws.push(w);cur.bb.x1=Math.max(cur.bb.x1,w.bb.x1);cur.bb.y0=Math.min(cur.bb.y0,w.bb.y0);cur.bb.y1=Math.max(cur.bb.y1,w.bb.y1)}
+      else{cur={ws:[w],bb:{...w.bb}};segs.push(cur)}})});
+  segs.forEach(s=>{s.text=s.ws.map(w=>w.text).join(' ');s.h=median(s.ws.map(w=>w.bb.y1-w.bb.y0));s.bg=ringColour(P,Wp,Hp,s.bb,4)});
+  segs.sort((a,b)=>a.bb.y0-b.bb.y0);const items=[];
+  segs.forEach(s=>{const it=items.find(it=>{const last=it.lines[it.lines.length-1],gap=s.bb.y0-last.bb.y1,cA=(s.bb.x0+s.bb.x1)/2,cB=(last.bb.x0+last.bb.x1)/2,
+      ov=Math.min(s.bb.x1,last.bb.x1)-Math.max(s.bb.x0,last.bb.x0),narrow=Math.min(s.bb.x1-s.bb.x0,last.bb.x1-last.bb.x0);
+      return gap>-s.h*.3&&gap<Math.max(s.h,last.h)*.8&&Math.max(s.h,last.h)/Math.min(s.h,last.h)<1.7&&(ov>narrow*.5||Math.abs(cA-cB)<s.h||Math.abs(s.bb.x0-last.bb.x0)<s.h*.5)&&colDist(s.bg,last.bg)<45});
+    if(it){it.lines.push(s);it.bb={x0:Math.min(it.bb.x0,s.bb.x0),y0:Math.min(it.bb.y0,s.bb.y0),x1:Math.max(it.bb.x1,s.bb.x1),y1:Math.max(it.bb.y1,s.bb.y1)}}
+    else items.push({lines:[s],bb:{...s.bb}})});
+  return items}
+/* where is the product? photo-like areas have many colour shades; flat fills, outlines and text don't */
+function findProductBox(P,Wp,Hp,tmask,sal){
+  const s=2,w=Math.ceil(Wp/s),h=Math.ceil(Hp/s),q=new Uint16Array(w*h),tm=new Uint8Array(w*h);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const X=Math.min(Wp-1,x*s),Y=Math.min(Hp-1,y*s),i=(Y*Wp+X)*4;q[y*w+x]=((P[i]>>5)<<6)|((P[i+1]>>5)<<3)|(P[i+2]>>5);tm[y*w+x]=tmask[Y*Wp+X]}
+  const tex=new Uint8Array(w*h),r=3,seen=new Uint16Array(512);let stamp=0;const mark=new Uint32Array(512);
+  for(let y=r;y<h-r;y++)for(let x=r;x<w-r;x++){stamp++;let n=0;for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++){const v=q[yy*w+xx];if(mark[v]!==stamp){mark[v]=stamp;n++}}if(n>=7)tex[y*w+x]=1}
+  // ignore text areas (dilated) so letters don't count as product
+  const tdil=dilate(tm,w,h,3);for(let i=0;i<w*h;i++)if(tdil[i])tex[i]=0;
+  const closed=dilate(tex,w,h,Math.max(4,Math.round(Math.min(w,h)/45)));
+  // label every candidate area, then keep the one with the most detail inside
+  const lab=new Int32Array(w*h),st=[];let n=0;const info=[];
+  for(let i=0;i<w*h;i++){if(!closed[i]||lab[i])continue;n++;let cnt=0,core=0,x0=w,y0=h,x1=0,y1=0;st.push(i);lab[i]=n;
+    while(st.length){const j=st.pop(),x=j%w,y=(j/w)|0;cnt++;if(tex[j])core++;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+      for(const k of [x>0?j-1:-1,x<w-1?j+1:-1,y>0?j-w:-1,y<h-1?j+w:-1])if(k>=0&&closed[k]&&!lab[k]){lab[k]=n;st.push(k)}}
+    info.push({cnt,core,x0,y0,x1,y1,id:n})}
+  if(sal){const ss=new Float64Array(n+1);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const l=lab[y*w+x];if(l)ss[l]+=sal[(Math.min(Hp-1,y*s)*Wp+Math.min(Wp-1,x*s))*4+3]}
+    info.forEach(b=>b.sal=ss[b.id]/b.cnt/255)}else info.forEach(b=>b.sal=1);
+  // colour richness: distinct shades inside each area (photos have many, flat graphics few)
+  const bins=new Map();info.forEach(b=>bins.set(b.id,new Set()));
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const l=lab[y*w+x];if(!l||tm[y*w+x])continue;const i=(Math.min(Hp-1,y*s)*Wp+Math.min(Wp-1,x*s))*4;bins.get(l).add(((P[i]>>4)<<8)|((P[i+1]>>4)<<4)|(P[i+2]>>4))}
+  // rings and outlines (detail only at the edge) are graphics, not products
+  const cin=new Float64Array(n+1);info.forEach(b=>{const ix0=b.x0+(b.x1-b.x0)*.25,ix1=b.x1-(b.x1-b.x0)*.25,iy0=b.y0+(b.y1-b.y0)*.25,iy1=b.y1-(b.y1-b.y0)*.25;
+    for(let y=Math.ceil(iy0);y<=iy1;y++)for(let x=Math.ceil(ix0);x<=ix1;x++)if(lab[y*w+x]===b.id&&tex[y*w+x])cin[b.id]++;b.centre=cin[b.id]/Math.max(1,b.core)});
+  info.forEach(b=>{b.shades=bins.get(b.id).size;b.score=b.shades*b.sal*b.sal*Math.min(1,b.centre*4)});
+  const cand=info.filter(b=>b.cnt>w*h*.015&&b.cnt<w*h*.7);if(!cand.length)return null;
+  const best=cand.reduce((a,b)=>b.score>a.score?b:a);if(best.core<w*h*.002)return null;
+  let {x0,y0,x1,y1}=best;
+  const m=Math.round(Math.max(x1-x0,y1-y0)*.25);
+  return{x0:Math.max(0,(x0-m)*s),y0:Math.max(0,(y0-m)*s),x1:Math.min(Wp-1,(x1+m)*s),y1:Math.min(Hp-1,(y1+m)*s)}}
+function ringUniform(P,Wp,Hp,bb,r,bg){let n=0,off=0;const chk=(x,y)=>{if(x<0||y<0||x>=Wp||y>=Hp)return;const i=(y*Wp+x)*4;n++;if(colDist([P[i],P[i+1],P[i+2]],bg)>22)off++};
+  for(let x=bb.x0-r;x<=bb.x1+r;x+=2){chk(x,bb.y0-r);chk(x,bb.y1+r)}for(let y=bb.y0-r;y<=bb.y1+r;y+=2){chk(bb.x0-r,y);chk(bb.x1+r,y)}return n>8&&off/n<.06}
+/* fill masked pixels from their surroundings (push-pull pyramid) */
+function fillMasked(img,mask,Wp,Hp){
+  let w=Wp,h=Hp,C=new Float32Array(w*h*3),Wt=new Float32Array(w*h);
+  for(let i=0;i<w*h;i++){const k=mask[i]?0:1;Wt[i]=k;C[i*3]=img[i*4]*k;C[i*3+1]=img[i*4+1]*k;C[i*3+2]=img[i*4+2]*k}
+  const lv=[{w,h,C,Wt}];
+  while(w>1||h>1){const nw=Math.max(1,(w+1)>>1),nh=Math.max(1,(h+1)>>1),nC=new Float32Array(nw*nh*3),nW=new Float32Array(nw*nh),p=lv[lv.length-1];
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const j=(y>>1)*nw+(x>>1),i=y*w+x;nW[j]+=p.Wt[i];nC[j*3]+=p.C[i*3];nC[j*3+1]+=p.C[i*3+1];nC[j*3+2]+=p.C[i*3+2]}
+    for(let j=0;j<nw*nh;j++){const s=nW[j];if(s>0){nC[j*3]/=s;nC[j*3+1]/=s;nC[j*3+2]/=s}nW[j]=Math.min(1,s)}
+    // store colours as premultiplied again for next level
+    for(let j=0;j<nw*nh;j++){nC[j*3]*=nW[j];nC[j*3+1]*=nW[j];nC[j*3+2]*=nW[j]}
+    lv.push({w:nw,h:nh,C:nC,Wt:nW});w=nw;h=nh;if(lv.length>16)break}
+  // colours: un-premultiply each level
+  lv.forEach(L=>{for(let j=0;j<L.w*L.h;j++){const s=L.Wt[j];if(s>0){L.C[j*3]/=s;L.C[j*3+1]/=s;L.C[j*3+2]/=s}}});
+  let F=lv[lv.length-1].C;
+  for(let k=lv.length-2;k>=0;k--){const L=lv[k],U=lv[k+1],out=new Float32Array(L.w*L.h*3);
+    for(let y=0;y<L.h;y++)for(let x=0;x<L.w;x++){const fx=Math.min(U.w-1,Math.max(0,(x-.5)/2)),fy=Math.min(U.h-1,Math.max(0,(y-.5)/2)),x0=Math.floor(fx),y0=Math.floor(fy),x1=Math.min(U.w-1,x0+1),y1=Math.min(U.h-1,y0+1),ax=fx-x0,ay=fy-y0,i=y*L.w+x,a=L.Wt[i];
+      for(let c=0;c<3;c++){const up=(F[(y0*U.w+x0)*3+c]*(1-ax)+F[(y0*U.w+x1)*3+c]*ax)*(1-ay)+(F[(y1*U.w+x0)*3+c]*(1-ax)+F[(y1*U.w+x1)*3+c]*ax)*ay;out[i*3+c]=a*L.C[i*3+c]+(1-a)*up}}
+    F=out}
+  for(let i=0;i<Wp*Hp;i++)if(mask[i]){img[i*4]=F[i*3];img[i*4+1]=F[i*3+1];img[i*4+2]=F[i*3+2];img[i*4+3]=255}}
+function dilate(mask,Wp,Hp,r){if(r<=0)return mask;const t=new Uint8Array(Wp*Hp),o=new Uint8Array(Wp*Hp);
+  for(let y=0;y<Hp;y++){let run=-1e9;for(let x=0;x<Wp;x++){if(mask[y*Wp+x])run=x;if(x-run<=r)t[y*Wp+x]=1}run=1e9;for(let x=Wp-1;x>=0;x--){if(mask[y*Wp+x])run=x;if(run-x<=r)t[y*Wp+x]=1}}
+  for(let x=0;x<Wp;x++){let run=-1e9;for(let y=0;y<Hp;y++){if(t[y*Wp+x])run=y;if(y-run<=r)o[y*Wp+x]=1}run=1e9;for(let y=Hp-1;y>=0;y--){if(t[y*Wp+x])run=y;if(run-y<=r)o[y*Wp+x]=1}}
+  return o}
+function largestBlob(bin,Wp,Hp){const lab=new Int32Array(Wp*Hp),st=[];let best=0,bestN=0,n=0;
+  for(let i=0;i<Wp*Hp;i++){if(!bin[i]||lab[i])continue;n++;let cnt=0;st.push(i);lab[i]=n;
+    while(st.length){const j=st.pop();cnt++;const x=j%Wp,y=(j/Wp)|0;
+      if(x>0&&bin[j-1]&&!lab[j-1]){lab[j-1]=n;st.push(j-1)}if(x<Wp-1&&bin[j+1]&&!lab[j+1]){lab[j+1]=n;st.push(j+1)}
+      if(y>0&&bin[j-Wp]&&!lab[j-Wp]){lab[j-Wp]=n;st.push(j-Wp)}if(y<Hp-1&&bin[j+Wp]&&!lab[j+Wp]){lab[j+Wp]=n;st.push(j+Wp)}}
+    if(cnt>bestN){bestN=cnt;best=n}}
+  const out=new Uint8Array(Wp*Hp);if(best)for(let i=0;i<Wp*Hp;i++)out[i]=lab[i]===best?1:0;return{blob:out,count:bestN}}
+function measureW(text,fs,weight,family){const c=measureW.c||(measureW.c=document.createElement('canvas').getContext('2d'));c.font=`${weight} ${fs}px ${fontCss(family)}, sans-serif`;return c.measureText(text).width}
+async function splitLayers(){
+  if(splitBusy)return;const id=sel.length===1?sel[0]:null,d=id&&effMap[id];
+  if(!d||d.type!=='image')return toast('Select an image first.');
+  if(d.slot)return toast('This image changes per product. Split works on a fixed image, like a flat template from CAD.');
+  if(d.rotation)return toast('Set the image’s rotation to 0 first, then split it.');
+  const ref=structRef(id);if(!ref)return;
+  const info=imgInfo(id);if(!info)return;
+  splitBusy=true;renderCtx();
+  try{
+    // 1) working copy, at most 2000 px on the long side
+    const sc=Math.min(1,2000/Math.max(info.nw,info.nh)),Wp=Math.round(info.nw*sc),Hp=Math.round(info.nh*sc);
+    const C=blankSize(Wp,Hp),cx=C.getContext('2d');cx.imageSmoothingQuality='high';cx.drawImage(info.src,0,0,Wp,Hp);
+    const ID=cx.getImageData(0,0,Wp,Hp),P=ID.data;
+    // 2) read the text
+    toast(ocrWorker?'Reading the text…':'Loading the text reader (about 3 MB, first time only)…');
+    const wk=await ocrReady();
+    const vars=variantCanvases(C,P,Wp,Hp),words=[];
+    for(let v=0;v<vars.length;v++){splitLog=m=>{if(m.status==='recognizing text')toast(`Reading the text… ${Math.round((v+m.progress)/vars.length*100)}%`)};
+      await wk.setParameters({tessedit_pageseg_mode:vars[v].psm});const {data}=await wk.recognize(vars[v].c,{},{blocks:true,text:true});collectWords(data,words)}
+    const dw=dedupeWords(words);
+    const items=buildItems(dw,P,Wp,Hp);
+    // 3) text colour, size, weight and a mask of the letters
+    const tmask=new Uint8Array(Wp*Hp),k=d.width/info.im.width()*info.im.width()/Wp,ky=d.height/Hp,kx=d.width/Wp,texts=[];
+    const flat=[];
+    items.forEach(it=>{const bb=it.bb,lh0=median(it.lines.map(l=>l.h)),e=Math.round(lh0*.22),bg=ringColour(P,Wp,Hp,{x0:bb.x0-e,y0:bb.y0-e,x1:bb.x1+e,y1:bb.y1+e},2);let ink=0,area=0;const far=[];
+      for(let y=Math.max(0,bb.y0-e);y<=Math.min(Hp-1,bb.y1+e);y++)for(let x=Math.max(0,bb.x0-e);x<=Math.min(Wp-1,bb.x1+e);x++){const i=(y*Wp+x)*4,c=[P[i],P[i+1],P[i+2]],dd=colDist(c,bg),inside=x>=bb.x0&&x<=bb.x1&&y>=bb.y0&&y<=bb.y1;if(inside)area++;
+        if(dd>55&&inside){ink++;far.push([dd,c])}if(dd>26)tmask[y*Wp+x]=1}
+      flat.push({bb,e,bg,uni:ringUniform(P,Wp,Hp,{x0:bb.x0-e,y0:bb.y0-e,x1:bb.x1+e,y1:bb.y1+e},2,bg)});
+      if(!far.length)return;far.sort((a,b)=>b[0]-a[0]);const top=far.slice(0,Math.max(1,far.length>>1)),col=[0,1,2].map(q=>top.reduce((s,f)=>s+f[1][q],0)/top.length);
+      const lineH=median(it.lines.map(l=>l.h)),ratio=ink/Math.max(1,area);
+      const weight=ratio>.36?'800':ratio>.27?'700':ratio>.2?'600':'500';
+      let fs=lineH*1.3;const widest=it.lines.reduce((a,l)=>l.bb.x1-l.bb.x0>a.bb.x1-a.bb.x0?l:a);
+      const mw=measureW(widest.text,fs,weight,'Inter');if(mw>0)fs=fs*Math.max(.72,Math.min(1.4,(widest.bb.x1-widest.bb.x0)/mw));
+      const cs=it.lines.map(l=>(l.bb.x0+l.bb.x1)/2),ls=it.lines.map(l=>l.bb.x0),rs=it.lines.map(l=>l.bb.x1),spread=a=>Math.max(...a)-Math.min(...a);
+      const align=it.lines.length<2?'center':spread(cs)<=Math.min(spread(ls),spread(rs))+2?'center':spread(ls)<spread(rs)?'left':'right';
+      const lh=it.lines.length>1?Math.max(.9,Math.min(1.6,((it.lines[it.lines.length-1].bb.y0-it.lines[0].bb.y0)/(it.lines.length-1))/fs)):1.15;
+      const padX=fs*.6,bw=bb.x1-bb.x0+padX*2,bh=Math.max(bb.y1-bb.y0,it.lines.length*fs*lh)+fs*.3;
+      const cyy=(bb.y0+bb.y1)/2;
+      texts.push({id:uid(),name:it.lines.map(l=>l.text).join(' ').slice(0,28),type:'text',
+        x:R((bb.x0-padX)*kx),y:R((cyy-bh/2)*ky),width:R(bw*kx),height:R(bh*ky),
+        text:it.lines.map(l=>l.text).join('\n'),fontFamily:'Inter',fontSize:R(fs*ky),fontStyle:weight,fill:toHex(col),align,lineHeight:+lh.toFixed(2)})});
+    const fillMask=dilate(tmask,Wp,Hp,Math.max(4,Math.round(Math.min(Wp,Hp)/170)));
+    // text on a solid colour (pills, badges): paint it with that colour, so no ghost of the letters is left
+    flat.forEach(f=>{if(!f.uni)return;const r=Math.max(4,Math.round(Math.min(Wp,Hp)/170));
+      for(let y=Math.max(0,f.bb.y0-f.e-r);y<=Math.min(Hp-1,f.bb.y1+f.e+r);y++)for(let x=Math.max(0,f.bb.x0-f.e-r);x<=Math.min(Wp-1,f.bb.x1+f.e+r);x++){const j=y*Wp+x;if(!fillMask[j])continue;const i=j*4;
+        if(colDist([P[i],P[i+1],P[i+2]],f.bg)>8||tmask[j]){P[i]=f.bg[0];P[i+1]=f.bg[1];P[i+2]=f.bg[2]}fillMask[j]=0}});
+    // 4) the product, with the AI cutout (skipped if the model can't load)
+    let prod=null,prodNote='';
+    try{toast(aiSess?'Finding the product…':'Loading the product finder (about 5 MB, first time only)…');
+      const SAL=(await aiMask(C)).getContext('2d').getImageData(0,0,Wp,Hp).data;
+      const box=findProductBox(P,Wp,Hp,tmask,SAL);
+      if(!box)prodNote=' No product photo found, so everything else stays in the background.';
+      else{toast(aiSess?'Cutting out the product…':'Loading the product finder (about 5 MB, first time only)…');
+        const bw=box.x1-box.x0+1,bh=box.y1-box.y0+1,crop=blankSize(bw,bh);crop.getContext('2d').drawImage(C,box.x0,box.y0,bw,bh,0,0,bw,bh);
+        const M=await aiMask(crop),md=M.getContext('2d').getImageData(0,0,bw,bh).data,bin=new Uint8Array(bw*bh);
+        for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){const j=y*bw+x;bin[j]=md[j*4+3]>128&&!tmask[(y+box.y0)*Wp+x+box.x0]?1:0}
+        const {blob,count}=largestBlob(bin,bw,bh);
+        if(count<bw*bh*.05)prodNote=' No clear product found, so it stays in the background.';
+        else{// fill holes inside the product outline (e.g. a dark door or screen)
+          const outside=new Uint8Array(bw*bh),st=[];for(let x=0;x<bw;x++){st.push(x,(bh-1)*bw+x)}for(let y=0;y<bh;y++){st.push(y*bw,y*bw+bw-1)}
+          while(st.length){const j=st.pop();if(outside[j]||blob[j])continue;outside[j]=1;const x=j%bw,y=(j/bw)|0;if(x>0)st.push(j-1);if(x<bw-1)st.push(j+1);if(y>0)st.push(j-bw);if(y<bh-1)st.push(j+bw)}
+          let x0=bw,y0=bh,x1=0,y1=0;for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){const j=y*bw+x;if(!outside[j]){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
+          const pw=x1-x0+1,ph=y1-y0+1,PC=blankSize(pw,ph),pc=PC.getContext('2d'),pd=pc.createImageData(pw,ph);
+          for(let y=0;y<ph;y++)for(let x=0;x<pw;x++){const j=(y+y0)*bw+x+x0,a=outside[j]?0:(blob[j]?md[j*4+3]:255),gi=((y+y0+box.y0)*Wp+x+x0+box.x0)*4,o=(y*pw+x)*4;
+            pd.data[o]=P[gi];pd.data[o+1]=P[gi+1];pd.data[o+2]=P[gi+2];pd.data[o+3]=a}
+          pc.putImageData(pd,0,0);
+          const inner=new Uint8Array(Wp*Hp);for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){const j=y*bw+x;if(!outside[j]&&(blob[j]?md[j*4+3]>40:1))inner[(y+box.y0)*Wp+x+box.x0]=1}
+          const pm=dilate(inner,Wp,Hp,3);for(let i=0;i<Wp*Hp;i++)if(pm[i])fillMask[i]=1;
+          const key='px_'+uid();IMG[key]=PC;assetNames[key]=(d.name||'Image')+' product';
+          const gx=box.x0+x0,gy=box.y0+y0;
+          prod={id:uid(),name:'Product',type:'image',img:key,x:R(gx*kx),y:R(gy*ky),width:R(pw*kx),height:R(ph*ky)}}}}
+    catch(e){prodNote=' The product cut-out needs the live EM Tool link, so the product stays in the background.'}
+    // 5) background with the text and product filled in
+    toast('Filling in the background…');await new Promise(r=>setTimeout(r,30));
+    fillMasked(P,fillMask,Wp,Hp);cx.putImageData(ID,0,0);
+    const bkey='px_'+uid();IMG[bkey]=C;assetNames[bkey]=(d.name||'Image')+' background';
+    // 6) swap the flat image for a folder of layers
+    snapshot();
+    const g={id:uid(),name:(d.name||'Image')+' (split)',type:'group',x:d.x||0,y:d.y||0,children:[
+      {id:uid(),name:'Background',type:'image',img:bkey,x:0,y:0,width:d.width,height:d.height,...(d.opacity!=null?{opacity:d.opacity}:{})},
+      ...(prod?[prod]:[]),...texts]};
+    const r2=structRef(id);r2.arr.splice(r2.i,1,g);orderNote([g.id]);
+    sel=[g.id];render();
+    toast(`Split into ${texts.length} text layer${texts.length===1?'':'s'}${prod?', the product':''} and the background.${prodNote} Check the text and pick the right font. Ctrl+Z undoes it.`);
+    setTimeout(()=>{const t=$('#toast');if(t)clearTimeout(toastT),toastT=setTimeout(()=>t.classList.remove('show'),7000)},0);
+  }catch(e){console.warn(e);toast(location.protocol==='file:'?'Split into layers needs the live EM Tool link.':'Couldn’t split this image. Check you are online the first time (the text reader downloads once).')}
+  finally{splitBusy=false;splitLog=null;renderCtx()}
+}
+
 /* ---------- floating context bar on the selected layer ---------- */
 function renderCtx(){const el=$('#ctx');if(!el)return;const id=sel.length===1?sel[0]:null,d=id&&effMap[id];
   if(!d||d.locked||!(tool==='move'||tool==='text')||curEdit||drag||toolDrag){el.style.display='none';return}
   const b=(c,l,pri,t)=>`<button data-c="${c}"${pri?' class="pri"':''} title="${t||l}">${l}</button>`;
-  el.innerHTML=d.type==='image'&&(d.slot==='pimg'||d.fit==='cover')?b('bgs','Backgrounds…',1,'Upload and assign backgrounds')+'<span class="sep"></span>'+b('apply','Apply to…'):d.type==='image'?b('aibg',aiBusy?'Removing background…':'✨ Remove background',1,'Cut out the subject with AI')+b('plainbg','Plain bg',0,'Remove a plain white or single-colour background (fast)')+b('replace','Replace',0,'Replace with your image')+'<span class="sep"></span>'+b('apply','Apply to…')
+  el.innerHTML=d.type==='image'&&(d.slot==='pimg'||d.fit==='cover')?b('bgs','Backgrounds…',1,'Upload and assign backgrounds')+'<span class="sep"></span>'+b('apply','Apply to…'):d.type==='image'?b('aibg',aiBusy?'Removing background…':'✨ Remove background',1,'Cut out the subject with AI')+b('split',splitBusy?'Splitting…':'Split into layers',0,'Turn a flat image into editable text, product and background layers')+b('plainbg','Plain bg',0,'Remove a plain white or single-colour background (fast)')+b('replace','Replace',0,'Replace with your image')+'<span class="sep"></span>'+b('apply','Apply to…')
     :b('apply','Apply to…',0,'Copy this layer’s changes to other products')+b('dup','Duplicate',0,'Duplicate (Ctrl+J)')+b('del','Delete',0,'Delete (Del)');
   el.style.display='flex';positionCtx()}
 function positionCtx(){const el=$('#ctx');if(!el||el.style.display==='none'||sel.length!==1)return;const n=nodeById(sel[0]);if(!n){el.style.display='none';return}
@@ -1915,9 +2159,9 @@ function wire(){
     if(b.dataset.pa==='del'){if(skus.length<2)return toast('A campaign needs at least one product.');snapshot();skus.splice(i,1);if(cur>=skus.length)cur=skus.length-1;sel=[];render();renderStrip();renderProdList();return}
     changeIdx=i;$('#prChangeIn').value='';$('#prChangeIn').click()});
   $('#prChangeIn').onchange=async e=>{const f=e.target.files[0];if(!f||changeIdx<0)return;try{const k=await readImage(f);snapshot();skus[changeIdx].img=k;render();renderStrip();renderProdList()}catch(err){toast('That file is not an image.')}};
-  $('#ctx').addEventListener('mousedown',e=>e.stopPropagation());
+  $('#ctx').addEventListener('mousedown',e=>{e.stopPropagation();if(e.target.closest('[data-c]'))e.preventDefault()});
   $('#ctx').addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(!c)return;c.blur();const a=c.dataset.c;
-    if(a==='bgs')openBackgrounds(sel[0]);else if(a==='aibg')aiRemoveBg();else if(a==='plainbg')removeBg();else if(a==='replace'){$('#replIn').value='';$('#replIn').click()}
+    if(a==='bgs')openBackgrounds(sel[0]);else if(a==='aibg')aiRemoveBg();else if(a==='split')splitLayers();else if(a==='plainbg')removeBg();else if(a==='replace'){$('#replIn').value='';$('#replIn').click()}
     else if(a==='apply')openApply('sel');else if(a==='dup'){snapshot();duplicateSel()}else if(a==='del')deleteSel()});
   $('#opts').addEventListener('change',e=>{const k=e.target.dataset.tx;if(!k)return;let v=e.target.value;
     if(k==='fontFamily'&&v==='__upload'){$('#fontIn').value='';$('#fontIn').click();renderOpts();return}
