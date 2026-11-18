@@ -1440,6 +1440,75 @@ function findProductBox(P,Wp,Hp,tmask,sal){
   return{x0:Math.max(0,(x0-m)*s),y0:Math.max(0,(y0-m)*s),x1:Math.min(Wp-1,(x1+m)*s),y1:Math.min(Hp-1,(y1+m)*s)}}
 function ringUniform(P,Wp,Hp,bb,r,bg){let n=0,off=0;const chk=(x,y)=>{if(x<0||y<0||x>=Wp||y>=Hp)return;const i=(y*Wp+x)*4;n++;if(colDist([P[i],P[i+1],P[i+2]],bg)>22)off++};
   for(let x=bb.x0-r;x<=bb.x1+r;x+=2){chk(x,bb.y0-r);chk(x,bb.y1+r)}for(let y=bb.y0-r;y<=bb.y1+r;y+=2){chk(bb.x0-r,y);chk(bb.x1+r,y)}return n>8&&off/n<.06}
+/* ---------- Canva-style pieces: on a plain background, lift every graphic out as its own picture ---------- */
+function modeColour(cs){const bins=new Map();cs.forEach(c=>{const k=((c[0]>>4)<<8)|((c[1]>>4)<<4)|(c[2]>>4);let b=bins.get(k);if(!b){b={n:0,s:[0,0,0]};bins.set(k,b)}b.n++;b.s[0]+=c[0];b.s[1]+=c[1];b.s[2]+=c[2]});
+  let best=null;bins.forEach(b=>{if(!best||b.n>best.n)best=b});return best?{col:best.s.map(v=>v/best.n),share:best.n/cs.length}:{col:[255,255,255],share:0}}
+function borderInfo(P,Wp,Hp){const cs=[],add=(x,y)=>{const i=(y*Wp+x)*4;cs.push([P[i],P[i+1],P[i+2]])};
+  for(let x=0;x<Wp;x+=3){add(x,1);add(x,Hp-2)}for(let y=0;y<Hp;y+=3){add(1,y);add(Wp-2,y)}
+  const m=modeColour(cs),near=cs.filter(c=>colDist(c,m.col)<16).length/cs.length;return{col:m.col,flat:near>.8}}
+const PIECE_T=12;
+function segDist(c,a,b){const ab=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],L=ab[0]*ab[0]+ab[1]*ab[1]+ab[2]*ab[2];if(!L)return colDist(c,a);
+  let t=((c[0]-a[0])*ab[0]+(c[1]-a[1])*ab[1]+(c[2]-a[2])*ab[2])/L;t=Math.max(0,Math.min(1,t));return colDist(c,[a[0]+ab[0]*t,a[1]+ab[1]*t,a[2]+ab[2]*t])}
+function segmentPieces(P,Wp,Hp){
+  const bg=borderInfo(P,Wp,Hp);if(!bg.flat)return null;
+  const out=[],claimed=new Uint8Array(Wp*Hp),minArea=Math.max(30,Math.round(Wp*Hp*.00003));
+  // find connected areas that differ from `fill` (and from every colour they sit on), inside a box
+  function comps(bx,fills,inRegion){const w=bx.x1-bx.x0+1,h=bx.y1-bx.y0+1,fg=new Uint8Array(w*h),lab=new Int32Array(w*h),list=[];
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const X=x+bx.x0,Y=y+bx.y0,j=Y*Wp+X;if(claimed[j]||(inRegion&&!inRegion(X,Y)))continue;const i=j*4,c=[P[i],P[i+1],P[i+2]];
+      if(fills.every(f=>colDist(c,f)>PIECE_T))fg[y*w+x]=1}
+    // smoothed edges (a blend of this colour and what's under it) at a border are not pieces of their own
+    if(fills.length>1){const drop=[];for(let y=0;y<h;y++)for(let x=0;x<w;x++){const q=y*w+x;if(!fg[q])continue;let border=false;
+        for(let dy=-2;dy<=2&&!border;dy++)for(let dx=-2;dx<=2;dx++){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=w||yy>=h||!fg[yy*w+xx]){border=true;break}}
+        if(!border)continue;const i=((y+bx.y0)*Wp+x+bx.x0)*4,c=[P[i],P[i+1],P[i+2]];if(fills.slice(1).some(f=>segDist(c,fills[0],f)<PIECE_T*1.4))drop.push(q)}
+      drop.forEach(q=>fg[q]=2)}
+    let n=0;const st=[];
+    const minA=fills.length>1?Math.max(minArea,Math.round(Wp*Hp*.00012)):minArea;
+    for(let s=0;s<w*h;s++){if(fg[s]!==1||lab[s])continue;n++;lab[s]=n;st.push(s);const px=[];
+      while(st.length){const q=st.pop();px.push(q);const x=q%w,y=(q/w)|0;
+        for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=w||yy>=h)continue;const k=yy*w+xx;if(fg[k]===1&&!lab[k]){lab[k]=n;st.push(k)}}}
+      if(px.length<minA)continue;
+      // give the piece back its smoothed edge (up to 2 px of blend pixels around it)
+      let ring=px;for(let step=0;step<2;step++){const nx=[];ring.forEach(q=>{const x=q%w,y=(q/w)|0;for(const k of [x>0?q-1:-1,x<w-1?q+1:-1,y>0?q-w:-1,y<h-1?q+w:-1])if(k>=0&&fg[k]===2&&!lab[k]){lab[k]=n;nx.push(k)}});px.push(...nx);ring=nx}
+      list.push(px.map(q=>(((q/w)|0)+bx.y0)*Wp+(q%w)+bx.x0))}
+    return list.sort((a,b)=>b.length-a.length)}
+  function emit(px,fill,fills,depth){
+    let x0=Wp,y0=Hp,x1=0,y1=0;px.forEach(j=>{const x=j%Wp,y=(j/Wp)|0;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y});
+    const w=x1-x0+1,h=y1-y0+1,own=new Uint8Array(w*h);px.forEach(j=>own[(((j/Wp)|0)-y0)*w+(j%Wp)-x0]=1);
+    const cs=px.map(j=>[P[j*4],P[j*4+1],P[j*4+2]]),m=modeColour(cs),dom=m.col,flat=m.share>=.45,thin=Math.min(w,h)<=6||Math.max(w,h)/Math.max(1,Math.min(w,h))>14;
+    // hull of the main colour: rows/columns between its first and last pixel
+    const rowA=new Int32Array(h).fill(-1),rowB=new Int32Array(h).fill(-1),colA=new Int32Array(w).fill(-1),colB=new Int32Array(w).fill(-1);
+    if(flat)for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(!own[y*w+x])continue;const i=((y+y0)*Wp+x+x0)*4;if(colDist([P[i],P[i+1],P[i+2]],dom)<22){if(rowA[y]<0)rowA[y]=x;rowB[y]=x;if(colA[x]<0)colA[x]=y;colB[x]=y}}
+    const inHull=(x,y)=>rowA[y]>=0&&x>=rowA[y]&&x<=rowB[y]&&colA[x]>=0&&y>=colA[x]&&y<=colB[x];
+    const rec={x0,y0,w,h,area:px.length,flat,thin,depth,kids:[]};out.push(rec);
+    px.forEach(j=>claimed[j]=1);
+    let kidMask=null;
+    if(flat&&!thin&&depth<3&&px.length>400){
+      // pieces sitting on this one (a truck on a white box, a logo on a dark header)
+      px.forEach(j=>claimed[j]=0);
+      const inside=(X,Y)=>{const x=X-x0,y=Y-y0;return own[y*w+x]||inHull(x,y)};
+      const kids=comps({x0,y0,x1,y1},[dom,...fills],inside);
+      kidMask=new Uint8Array(w*h);
+      kids.forEach(k=>{k.forEach(j=>kidMask[(((j/Wp)|0)-y0)*w+(j%Wp)-x0]=1)});
+      px.forEach(j=>{if(!kidMask[(((j/Wp)|0)-y0)*w+(j%Wp)-x0])claimed[j]=1});
+      kids.forEach(k=>emit(k,dom,[dom,...fills],depth+1))}
+    // the picture for this piece: soft edges against what it sits on, gaps under its own pieces filled with its colour
+    const C2=blankSize(w,h),c2=C2.getContext('2d'),id=c2.createImageData(w,h),o=id.data,span=Math.max(6,colDist(dom,fill)*.85);
+    let holes=null;if(!flat){// photos: keep pale highlights inside the outline
+      holes=new Uint8Array(w*h);const st=[];for(let x=0;x<w;x++){st.push(x,(h-1)*w+x)}for(let y=0;y<h;y++){st.push(y*w,y*w+w-1)}
+      while(st.length){const q=st.pop();if(holes[q]||own[q])continue;holes[q]=1;const x=q%w,y=(q/w)|0;if(x>0)st.push(q-1);if(x<w-1)st.push(q+1);if(y>0)st.push(q-w);if(y<h-1)st.push(q+w)}}
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const q=y*w+x,i=((y+y0)*Wp+x+x0)*4,k=q*4;let a=0,c=[P[i],P[i+1],P[i+2]];
+      if(kidMask&&kidMask[q]){if(inHull(x,y)){a=1;c=dom}}
+      else if(own[q]){if(flat)a=Math.min(1,colDist(c,fill)/span);else{const edge=(x>0&&holes[q-1])||(x<w-1&&holes[q+1])||(y>0&&holes[q-w])||(y<h-1&&holes[q+w])||x===0||y===0||x===w-1||y===h-1;a=edge?Math.min(1,colDist(c,fill)/24):1}}
+      else if(holes&&!holes[q]){a=1}
+      else if(flat&&inHull(x,y)&&colDist(c,dom)<40){a=1}
+      if(a>0&&a<.98){c=c.map((v,t)=>Math.max(0,Math.min(255,fill[t]+(v-fill[t])/a)))}
+      o[k]=c[0];o[k+1]=c[1];o[k+2]=c[2];o[k+3]=Math.round(a*255)}
+    c2.putImageData(id,0,0);rec.canvas=C2}
+  comps({x0:0,y0:0,x1:Wp-1,y1:Hp-1},[bg.col]).forEach(px=>emit(px,bg.col,[bg.col],0));
+  // names
+  const photos=out.filter(r=>!r.flat&&!r.thin&&r.depth===0).sort((a,b)=>b.area-a.area);
+  out.forEach(r=>r.name=r===photos[0]&&r.area>Wp*Hp*.02?'Product':r.thin?'Line':r.flat?(r.area>Wp*Hp*.01?'Shape':'Icon'):'Graphic');
+  return{bg:bg.col,pieces:out}}
 /* fill masked pixels from their surroundings (push-pull pyramid) */
 function fillMasked(img,mask,Wp,Hp){
   let w=Wp,h=Hp,C=new Float32Array(w*h*3),Wt=new Float32Array(w*h);
@@ -1490,14 +1559,21 @@ async function splitLayers(){
     const vars=variantCanvases(C,P,Wp,Hp),words=[];
     for(let v=0;v<vars.length;v++){splitLog=m=>{if(m.status==='recognizing text')toast(`Reading the text… ${Math.round((v+m.progress)/vars.length*100)}%`)};
       await wk.setParameters({tessedit_pageseg_mode:vars[v].psm});const {data}=await wk.recognize(vars[v].c,{},{blocks:true,text:true});collectWords(data,words)}
-    const dw=dedupeWords(words);
-    const items=buildItems(dw,P,Wp,Hp);
+    const dw=dedupeWords(words);    // a lone character, or two shaky letters on their own, is usually part of an icon, not text
+    const items=buildItems(dw,P,Wp,Hp).filter(it=>{const ws=it.lines.flatMap(l=>l.ws),an=ws.map(w=>w.text).join('').replace(/[^A-Za-z0-9]/g,'').length;
+      if(an>=3)return true;if(an<=1)return false;return ws.every(w=>w.conf>=90)});
     // 3) text colour, size, weight and a mask of the letters
     const tmask=new Uint8Array(Wp*Hp),k=d.width/info.im.width()*info.im.width()/Wp,ky=d.height/Hp,kx=d.width/Wp,texts=[];
     const flat=[];
-    items.forEach(it=>{const bb=it.bb,lh0=median(it.lines.map(l=>l.h)),e=Math.round(lh0*.22),bg=ringColour(P,Wp,Hp,{x0:bb.x0-e,y0:bb.y0-e,x1:bb.x1+e,y1:bb.y1+e},2);let ink=0,area=0;const far=[];
-      for(let y=Math.max(0,bb.y0-e);y<=Math.min(Hp-1,bb.y1+e);y++)for(let x=Math.max(0,bb.x0-e);x<=Math.min(Wp-1,bb.x1+e);x++){const i=(y*Wp+x)*4,c=[P[i],P[i+1],P[i+2]],dd=colDist(c,bg),inside=x>=bb.x0&&x<=bb.x1&&y>=bb.y0&&y<=bb.y1;if(inside)area++;
-        if(dd>55&&inside){ink++;far.push([dd,c])}if(dd>26)tmask[y*Wp+x]=1}
+    items.forEach(it=>{const bb=it.bb,lh0=median(it.lines.map(l=>l.h)),e=Math.max(3,Math.round(lh0*.15)),bg=ringColour(P,Wp,Hp,{x0:bb.x0-e,y0:bb.y0-e,x1:bb.x1+e,y1:bb.y1+e},2);let ink=0,area=0;const far=[];
+      const rx0=Math.max(0,bb.x0-e),ry0=Math.max(0,bb.y0-e),rx1=Math.min(Wp-1,bb.x1+e),ry1=Math.min(Hp-1,bb.y1+e),rw=rx1-rx0+1,rh=ry1-ry0+1,ink0=new Uint8Array(rw*rh),lab=new Int32Array(rw*rh);
+      for(let y=ry0;y<=ry1;y++)for(let x=rx0;x<=rx1;x++){const i=(y*Wp+x)*4,c=[P[i],P[i+1],P[i+2]],dd=colDist(c,bg),inside=x>=bb.x0&&x<=bb.x1&&y>=bb.y0&&y<=bb.y1;if(inside)area++;
+        if(dd>55&&inside){ink++;far.push([dd,c])}if(dd>26)ink0[(y-ry0)*rw+x-rx0]=1}
+      // keep only strokes that belong to this text: they touch the text box and don't run off past the margin
+      let n=0;for(let s0=0;s0<rw*rh;s0++){if(!ink0[s0]||lab[s0])continue;n++;const st=[s0],px=[];lab[s0]=n;let inB=0,edge=false;
+        while(st.length){const q=st.pop();px.push(q);const x=q%rw,y=(q/rw)|0,X=x+rx0,Y=y+ry0;if(X>=bb.x0&&X<=bb.x1&&Y>=bb.y0&&Y<=bb.y1)inB++;if(x===0||y===0||x===rw-1||y===rh-1)edge=true;
+          for(const k of [x>0?q-1:-1,x<rw-1?q+1:-1,y>0?q-rw:-1,y<rh-1?q+rw:-1])if(k>=0&&ink0[k]&&!lab[k]){lab[k]=n;st.push(k)}}
+        if(inB&&(!edge||inB>px.length*.8))px.forEach(q=>tmask[((q/rw)|0)*Wp+ry0*Wp+(q%rw)+rx0]=1)}
       flat.push({bb,e,bg,uni:ringUniform(P,Wp,Hp,{x0:bb.x0-e,y0:bb.y0-e,x1:bb.x1+e,y1:bb.y1+e},2,bg)});
       if(!far.length)return;far.sort((a,b)=>b[0]-a[0]);const top=far.slice(0,Math.max(1,far.length>>1)),col=[0,1,2].map(q=>top.reduce((s,f)=>s+f[1][q],0)/top.length);
       const lineH=median(it.lines.map(l=>l.h)),ratio=ink/Math.max(1,area);
@@ -1512,11 +1588,25 @@ async function splitLayers(){
       texts.push({id:uid(),name:it.lines.map(l=>l.text).join(' ').slice(0,28),type:'text',
         x:R((bb.x0-padX)*kx),y:R((cyy-bh/2)*ky),width:R(bw*kx),height:R(bh*ky),
         text:it.lines.map(l=>l.text).join('\n'),fontFamily:'Inter',fontSize:R(fs*ky),fontStyle:weight,fill:toHex(col),align,lineHeight:+lh.toFixed(2)})});
-    const fillMask=dilate(tmask,Wp,Hp,Math.max(4,Math.round(Math.min(Wp,Hp)/170)));
+    const fillMask=dilate(tmask,Wp,Hp,Math.max(2,Math.round(Math.min(Wp,Hp)/400)));
     // text on a solid colour (pills, badges): paint it with that colour, so no ghost of the letters is left
-    flat.forEach(f=>{if(!f.uni)return;const r=Math.max(4,Math.round(Math.min(Wp,Hp)/170));
+    flat.forEach(f=>{if(!f.uni)return;const r=Math.max(2,Math.round(Math.min(Wp,Hp)/400));
       for(let y=Math.max(0,f.bb.y0-f.e-r);y<=Math.min(Hp-1,f.bb.y1+f.e+r);y++)for(let x=Math.max(0,f.bb.x0-f.e-r);x<=Math.min(Wp-1,f.bb.x1+f.e+r);x++){const j=y*Wp+x;if(!fillMask[j])continue;const i=j*4;
         if(colDist([P[i],P[i+1],P[i+2]],f.bg)>8||tmask[j]){P[i]=f.bg[0];P[i+1]=f.bg[1];P[i+2]=f.bg[2]}fillMask[j]=0}});
+    // 4a) plain background (most thumbnails): lift every graphic out as its own picture, like Canva
+    {const bgI=borderInfo(P,Wp,Hp);
+    if(bgI.flat){toast('Separating the graphics…');await new Promise(r=>setTimeout(r,30));
+      fillMasked(P,fillMask,Wp,Hp);
+      const seg=segmentPieces(P,Wp,Hp);
+      if(seg){const layers=seg.pieces.filter(r=>r.canvas).map(r=>{const key='px_'+uid();IMG[key]=r.canvas;assetNames[key]=(d.name||'Image')+' '+r.name.toLowerCase();
+          return{id:uid(),name:r.name,type:'image',img:key,x:R(r.x0*kx),y:R(r.y0*ky),width:R(r.w*kx),height:R(r.h*ky)}});
+        snapshot();
+        const g={id:uid(),name:(d.name||'Image')+' (split)',type:'group',x:d.x||0,y:d.y||0,children:[
+          {id:uid(),name:'Background',type:'rect',x:0,y:0,width:d.width,height:d.height,fill:toHex(seg.bg),...(d.opacity!=null?{opacity:d.opacity}:{})},...layers,...texts]};
+        const r2=structRef(id);r2.arr.splice(r2.i,1,g);orderNote([g.id]);sel=[g.id];render();
+        const nP=layers.length;toast(`Split into ${texts.length} text layer${texts.length===1?'':'s'}, ${nP} picture${nP===1?'':'s'} and a plain background. Check the text and pick the right font. Ctrl+Z undoes it.`);
+        setTimeout(()=>{const t=$('#toast');if(t)clearTimeout(toastT),toastT=setTimeout(()=>t.classList.remove('show'),7000)},0);
+        return}}}
     // 4) the product, with the AI cutout (skipped if the model can't load)
     let prod=null,prodNote='';
     try{toast(aiSess?'Finding the product…':'Loading the product finder (about 5 MB, first time only)…');
