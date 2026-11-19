@@ -330,7 +330,7 @@ body.rzing,body.rzing *{user-select:none}body.rzx,body.rzx *{cursor:col-resize!i
 #adjpop{position:fixed;z-index:46;display:none;width:250px;background:#333;border:1px solid #4a4a4a;border-radius:6px;padding:10px 12px;box-shadow:0 10px 28px rgba(0,0,0,.6)}
 #adjpop b{display:block;margin-bottom:6px;color:var(--tx2)}#adjpop input[type=range]{width:100%}
 #layers .row .clipmark{color:#9a9a9a;font-size:13px;margin-right:-2px;flex-shrink:0}
-.thumb .refbadge{position:absolute;right:6px;top:calc(100% - 52px);background:#d39e2a;color:#111;font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.04em}
+.thumb .refbadge{position:absolute;left:6px;top:6px;background:#d39e2a;color:#111;font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.04em}
 footer .lbl>div:first-child{flex-wrap:wrap;row-gap:6px}footer .lbl>div:first-child>b{flex:1 1 100%!important}footer .lbl .lbtn{white-space:nowrap;padding:3px 8px;font-size:11px}
 </style>
 </head>
@@ -345,6 +345,7 @@ footer .lbl>div:first-child{flex-wrap:wrap;row-gap:6px}footer .lbl>div:first-chi
   <button id="prodBtn" class="ed camponly" title="Add, import or remove products">Products</button>
   <button id="applyBtn" class="ed camponly" style="background:#18181b;color:#fff;border-color:#18181b">Apply to… <span id="applyCount"></span></button>
   <button class="ed" id="toolsBtn" title="Show or hide the Photopea-style toolbox">Tools</button>
+  <button class="ed camponly" id="saveLayBtn" title="Save this product’s design as a layout on Home, to start new campaigns from it">Save as layout</button>
   <button class="ed camponly" id="exportBtn" title="Export images (Ctrl+Alt+Shift+W)">Export</button>
   <button class="ed" id="addImgBtn" title="Add image (or drag a file onto the canvas, or Ctrl+V)">+ Image</button>
   <input type="file" id="fileIn" accept="image/*,.psd,.pdf" multiple hidden><input type="file" id="psdNewIn" accept=".psd,.pdf" hidden>
@@ -364,7 +365,7 @@ footer .lbl>div:first-child{flex-wrap:wrap;row-gap:6px}footer .lbl>div:first-chi
 <div id="opts"></div>
 <div id="main">
 <footer>
-  <div class="lbl"><div style="display:flex;align-items:center;gap:6px"><b style="flex:1">Products</b><button id="addProdBtn" class="lbtn camponly pri" title="Add products from photos (one product per photo, named from the file)">+ Products</button><button id="newCatBtn" class="lbtn camponly" title="New category folder">+ Folder</button></div><span>Click to edit. Drag onto a folder to set its category.</span></div>
+  <div class="lbl"><div style="display:flex;align-items:center;gap:6px"><b style="flex:1">Products</b><button id="addProdBtn" class="lbtn camponly pri" title="Add products from photos. They copy the layout of the product you clicked (Ctrl+click several products to make one thumbnail per layout)">+ Products</button><button id="newCatBtn" class="lbtn camponly" title="New category folder">+ Folder</button></div><span>Click a product, then + Products to add more with its layout. Drag onto a folder to set its category.</span></div>
   <div id="strip"></div>
 </footer>
 <div class="rz" data-rz="prod" title="Drag to resize. Double-click to reset."></div>
@@ -414,7 +415,7 @@ footer .lbl>div:first-child{flex-wrap:wrap;row-gap:6px}footer .lbl>div:first-chi
   <div class="muted" style="margin-top:4px;font-size:12px">A size with a different shape fits the 1200×1200 design inside it on the background colour.</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
     <div><div style="font-weight:600;margin-bottom:6px">File type</div>
-      <div style="display:flex;gap:4px" id="exFmt"><button data-f="jpeg" class="fmt on">JPEG</button><button data-f="png" class="fmt">PNG</button><button data-f="webp" class="fmt">WebP</button></div>
+      <div style="display:flex;gap:4px" id="exFmt"><button data-f="jpeg" class="fmt on">JPEG</button><button data-f="png" class="fmt">PNG</button><button data-f="webp" class="fmt">WebP</button><button data-f="psd" class="fmt" title="Layered Photoshop file: folders, editable text, every layer separate">PSD</button></div>
       <div id="exQRow" style="margin-top:8px">Quality <input type="range" id="exQ" min="50" max="100" step="1" value="90" style="vertical-align:middle;width:110px"> <span id="exQV">90</span></div></div>
     <div><div style="font-weight:600;margin-bottom:6px">Keep each file under</div>
       <select id="exMax" style="font:inherit;padding:5px;border:1px solid #d4d4d8;border-radius:6px"><option value="0">No limit</option><option value="300">300 KB</option><option value="500">500 KB</option><option value="1024">1 MB</option><option value="2048">2 MB</option></select>
@@ -903,16 +904,19 @@ function editText(id){
   setTimeout(()=>{ta.focus();ta.select()},0);
   let done=false;
   const finish=save=>{if(done)return;done=true;curEdit=null;const v=ta.value;ta.remove();tr.show();
+    if(id===justMadeText){justMadeText=null;if(!v.trim()||v.trim()==='New text'||!save){const r=structRef(id)||findIn(skus[cur].extras,id);if(r){r.arr.splice(r.i,1);hist.pop();sel=[];render();return}}}
     if(save&&v!==(d.text||'')){snapshot();setProps(id,{text:v})}render()};
   ta.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'){e.preventDefault();finish(false)}else if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();finish(true)}});
   ta.addEventListener('blur',()=>finish(true));
   curEdit={finish};renderOpts();renderCtx();
 }
+let justMadeText=null;
+function isStrayText(d){return d&&d.type==='text'&&String(d.text||'').trim()==='New text'&&!d.slot}
 function newText(p){
   snapshot();
   const T=textDef;const t={id:uid(),name:'Text',type:'text',x:R(p.x),y:R(p.y-35),width:420,height:Math.max(70,Math.round(T.fontSize*1.6)),text:'New text',fontSize:T.fontSize,fontFamily:T.fontFamily,fontStyle:T.fontStyle,italic:T.italic,fill:T.fill,align:T.align,lineHeight:1.15};
   if(applyAll)base.push(t);else skus[cur].extras.push(t);
-  sel=[t.id];render();editText(t.id);
+  sel=[t.id];justMadeText=t.id;render();editText(t.id);
 }
 
 /* ---------- pointer: select, drag, Alt-duplicate, Shift-constrain, snapping ---------- */
@@ -1152,7 +1156,7 @@ function renderStrip(){
   let idx=visIdx();if(cats.length&&catFilter==='all')idx=[...idx].sort((a,b)=>catOrder(skus[a])-catOrder(skus[b])||a-b);let h='';
   const thumb=i=>{const s=skus[i];offLayer.destroyChildren();addAll(offLayer,effective(i));offLayer.draw();
     const url=off.toDataURL({pixelRatio:1,mimeType:'image/jpeg',quality:.85});
-    return `<div class="thumb${i===cur?' on':''}${prodSel.has(i)&&prodSel.size>1?' psel':''}" data-i="${i}"><img src="${url}" alt="${esc(s.sku)}" draggable="false">${camp&&i===refIndex()?'<span class="refbadge" title="Reference: new products copy this design">REF</span>':''}${camp?`<button class="tmenu" title="More: rename or delete" aria-label="Product menu">⋯</button><span class="tacts"><button class="tact" data-ta="dup" title="Duplicate this product" aria-label="Duplicate"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M11 3.5V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button><button class="tact" data-ta="img" title="Replace image" aria-label="Replace image"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="6" r="1.4" fill="currentColor"/><path d="M2 12l4-4 3 3 2-2 3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button></span>`:''}<div>${esc(s.sku)}_1200x1200.jpg</div></div>`};
+    return `<div class="thumb${i===cur?' on':''}${prodSel.has(i)&&prodSel.size>1?' psel':''}" data-i="${i}"><img src="${url}" alt="${esc(s.sku)}" draggable="false">${camp?`<button class="tmenu" title="More: rename or delete" aria-label="Product menu">⋯</button><span class="tacts"><button class="tact" data-ta="dup" title="Duplicate this product" aria-label="Duplicate"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M11 3.5V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button><button class="tact" data-ta="img" title="Replace image" aria-label="Replace image"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="6" r="1.4" fill="currentColor"/><path d="M2 12l4-4 3 3 2-2 3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button></span>`:''}<div>${esc(s.sku)}_1200x1200.jpg</div></div>`};
   if(camp&&cats.length){
     const groups=(catFilter==='all'?[...cats.map(c=>c.id),'none']:[catFilter]);
     groups.forEach(g=>{const c=cats.find(x=>x.id===g),list=idx.filter(i=>(catOf(skus[i])?skus[i].cat:'none')===g);
@@ -1171,15 +1175,47 @@ function moveToLayout(ids){const xs=skus[cur].extras;let list=ids?xs.filter(d=>i
   const groups=new Map(),top=[];list.forEach(d=>{const at=d.at;delete d.at;delete d.extra;if(at&&(at==='__bottom'||base.some(b=>b.id===at))){if(!groups.has(at))groups.set(at,[]);groups.get(at).push(d)}else top.push(d)});
   if(groups.has('__bottom'))base.unshift(...groups.get('__bottom'));
   groups.forEach((arr,at)=>{if(at==='__bottom')return;const i=base.findIndex(b=>b.id===at);base.splice(i+1,0,...arr)});base.push(...top);
-  sel=list.map(d=>d.id);render();renderStrip();return list.length}
+  lastMoved=new Set();list.forEach(d=>walk([d],x=>lastMoved.add(x.id)));sel=list.map(d=>d.id);render();renderStrip();return list.length}
 /* the reference product ("ref", like Muse): new products start as a copy of its design */
+/* find the main product picture in the template and make it the product photo, so new products only swap that */
+let lastMoved=null;
+/* stacking order of every layer, and the highest layer that covers the whole canvas (anything under it can't be seen) */
+function stackInfo(){const order=new Map();let k=0,cover=-1;(function w(a,ox,oy,hidden){a.forEach(d=>{const hid=hidden||d.visible===false;
+    if(d.children){w(d.children,ox+(d.x||0),oy+(d.y||0),hid);return}order.set(d.id,k);
+    if(!hid&&(d.opacity==null||d.opacity>.98)&&(d.type==='rect'||d.type==='image')&&!d.clip){const x=ox+(d.x||0),y=oy+(d.y||0);
+      if(x<=W*.03&&y<=H*.03&&x+(d.width||0)>=W*.97&&y+(d.height||0)>=H*.97&&!(d.type==='rect'&&/rgba\(0,0,0,0\)|transparent/.test(d.fill||'')))cover=k}
+    k++})})(base,0,0,false);return{order,cover}}
+function autoProductSlot(prefer){const si=stackInfo();let has=null;walk(base,d=>{if(d.slot==='image')has=d});
+  if(has&&!prefer&&(si.order.get(has.id)||0)>si.cover)return has;
+  const c=[];(function w(a,ox,oy){a.forEach(d=>{if(prefer&&!prefer.has(d.id)&&!d.children)return;if(d.children)return w(d.children,ox+(d.x||0),oy+(d.y||0));
+    if(d.type!=='image'||d.locked||d.slot&&d.slot!=='image'||d.id==='bg'||d.visible===false)return;if((si.order.get(d.id)||0)<si.cover)return;
+    const area=(d.width||0)*(d.height||0);if(area>W*H*.85||area<W*H*.03)return;c.push({d,area})})})(base,0,0);
+  if(!c.length)return prefer?autoProductSlot(null):null;const pick=(c.find(x=>/product/i.test(x.d.name||''))||c.sort((a,b)=>b.area-a.area)[0]).d;
+  const r=skus[refIndex()];walk(base,x=>{if(x.slot==='image'&&x!==pick){x.img=x.img||(r&&r.img);delete x.slot}});if(r&&pick.img)r.img=pick.img;pick.slot='image';return pick}
+/* save the current product's whole design as a reusable layout (Home → Layouts) */
+function saveAsLayout(){if(skus.length===1&&skus[0].extras.length){moveToLayout(null);skus[0].ref=true;autoProductSlot(lastMoved)}else autoProductSlot(null);
+  const s0=skus[refIndex()];if(!s0)return;const rec=store.campaigns.find(c=>c.id===openDoc.id);
+  ask('Save as layout','New campaigns made from it start with this design. The product photo and the texts that change per product stay that way.',(rec?rec.name:'My')+' layout','Save',name=>{
+    const doc=effectiveOf(base,s0,cats);
+    walk(doc,d=>{delete d.extra;delete d.at;Object.keys(d).forEach(k=>{if(k[0]==='_')delete d[k]});if(d.slot==='cat')delete d.slot});
+    const l={id:'lay_'+uid(),name,base:doc,sampleName:s0.name||s0.sku,sampleImg:s0.img,updatedAt:now()};store.layouts.push(l);persistNow&&persistNow(false);
+    let pn=null;walk(doc,d=>{if(d.slot==='image')pn=d.name});renderStrip();render();
+    toast(`Saved “${name}” to Home → Layouts (from ${s0.sku}${s0.ref?' (REF)':''}). New campaigns from it give every product this layout${pn?`, with its photo where “${pn}” is`:''}.`)})}
 function refIndex(){const i=skus.findIndex(s=>s.ref);return i<0?0:i}
-function fromRef(list){const r=skus[refIndex()];if(!r)return list;
-  return list.map(n=>({...n,overrides:clone(r.overrides||{}),extras:clone(r.extras||[]),values:{...clone(r.values||{}),...(n.values||{})},...(n.cat?{}:r.cat?{cat:r.cat}:{})}))}
+function dropStray(arr){for(let i=arr.length-1;i>=0;i--){const d=arr[i];if(isStrayText(d))arr.splice(i,1);else if(d.children)dropStray(d.children)}return arr}
+let addTemplates=null;
+function fromRef(list){const tp=(addTemplates&&addTemplates.length?addTemplates:[cur]).filter(i=>skus[i]);addTemplates=null;if(!tp.length)return list;
+  const out=[];list.forEach(n=>tp.forEach((ti,k)=>{const r=skus[ti];dropStray(r.extras||[]);
+    out.push({...n,sku:tp.length>1?n.sku+'_'+(k+1):n.sku,overrides:clone(r.overrides||{}),extras:dropStray(clone(r.extras||[])),values:{...clone(r.values||{}),...(n.values||{})},...(n.cat?{}:r.cat?{cat:r.cat}:{})})}));
+  out.forEach(o=>{delete o.ref});lastTplNames=tp.map(i=>skus[i].sku);return out}
+let lastTplNames=[];
+function fromRefOld(list){const r=skus[refIndex()];if(!r)return list;dropStray(r.extras||[]);
+  return list.map(n=>({...n,overrides:clone(r.overrides||{}),extras:dropStray(clone(r.extras||[])),values:{...clone(r.values||{}),...(n.values||{})},...(n.cat?{}:r.cat?{cat:r.cat}:{})}))}
 function setRef(i){skus.forEach((s,k)=>{if(k===i)s.ref=true;else delete s.ref});renderStrip();toast(`${skus[i].sku} is now the reference: new products copy its design.`)}
-function addProductsFromPanel(){const xs=skus[cur].extras;
-  if(xs.length&&skus.length===1){const n=moveToLayout(null);skus[0].ref=true;toast(`${skus[cur].sku}’s design (${n} layer${n>1?'s':''}) is now shared by all products. Next: click the product picture and set “This layer is → Changes per product (product photo)”.`);
-    setTimeout(()=>{const t=$('#toast');if(t)clearTimeout(toastT),toastT=setTimeout(()=>t.classList.remove('show'),9000)},0)}
+function addProductsWith(list){addTemplates=list;addProductsFromPanel(true)}
+function addProductsFromPanel(keep){if(keep!==true)addTemplates=prodSel.size>1?[...prodSel].sort((a,b)=>a-b):[cur];const xs=skus[cur].extras;
+  let prefer=null;if(xs.length&&skus.length===1){moveToLayout(null);skus[0].ref=true;prefer=lastMoved}
+  const pp=autoProductSlot(prefer);if(pp){render();renderStrip()}
   const c=pageCat&&pageCat!=='none'?cats.find(x=>x.id===pageCat):null;$('#prCat').value=c?c.name:'';
   $('#prPhotoIn').value='';$('#prPhotoIn').click()}
 /* ---------- layer right-click menu (like Photopea) ---------- */
@@ -1222,6 +1258,7 @@ function openLayerMenu(x,y){if(!sel.length)return;const ds=sel.map(id=>effMap[id
     (ds.length>1?it('merge','Merge layers','Ctrl+E'):it('mergedown','Merge down','Ctrl+E',!below))+(canRaster?it('raster','Rasterize layer'):'')+'<div class="sep"></div>'+
     (clipped?it('clip','Release clipping mask','Ctrl+Alt+G'):it('clip','Create clipping mask','Ctrl+Alt+G',ds.length===1&&!below))+'<div class="sep"></div>'+
     (one?it('bc','Brightness / Contrast…')+it('hs','Hue / Saturation…')+'<div class="sep"></div>':'')+
+    (one&&one.type==='image'&&openDoc&&openDoc.kind==='campaign'&&one.slot!=='image'?it('prodspot','Use as product photo'):'')+
     (ds.some(d=>d.extra)&&openDoc&&openDoc.kind==='campaign'?it('tolayout','Move to layout (all products)')+'<div class="sep"></div>':'')+
     it('group','Group into folder','Ctrl+G')+(one&&one.type==='group'?it('ungroup','Ungroup','Ctrl+Shift+G'):'')+
     it('vis',ds.every(d=>d.visible===false)?'Show layer':'Hide layer')+it('lock',ds.every(d=>d.locked)?'Unlock layer':'Lock layer');
@@ -1232,6 +1269,9 @@ function layerMenuAct(a){const m=$('#lmenu'),x=+m.dataset.x,y=+m.dataset.y;close
   else if(a==='ren'){const d=effMap[sel[0]];ask('Rename layer','',d.name,'Rename',v=>{snapshot();setProps(sel[0],{name:v});render()})}
   else if(a==='merge'||a==='mergedown')mergeLayers(sel,false);else if(a==='raster')mergeLayers(sel,true);
   else if(a==='clip')toggleClip();else if(a==='bc'||a==='hs')adjPop(a==='bc'?'bc':'hs',x,y);
+  else if(a==='prodspot'){let id=sel[0];if(!findIn(base,id)){moveToLayout(null);if(!findIn(base,id))return toast('Move this layer to the layout first.')}
+    const e=effMap[id];walk(base,x=>{if(x.slot==='image'&&x.id!==id){x.img=x.img||skus[cur].img;delete x.slot}});setSlot(id,'prod');
+    toast(`“${e?e.name:'This picture'}” is now the product photo: every product shows its own photo here. ${skus[refIndex()].sku} (REF) keeps this one.`)}
   else if(a==='tolayout'){const ids=sel.filter(id=>skus[cur].extras.some(d=>d.id===id));const n=moveToLayout(ids.length?ids:null);toast(`${n} layer${n>1?'s are':' is'} now part of the layout, so every product has ${n>1?'them':'it'}. Set “This layer is” on the product picture and texts that should change per product.`)}
   else if(a==='group')groupSel();else if(a==='ungroup')ungroupSel();
   else if(a==='vis'){snapshot();const hide=!sel.every(id=>effMap[id].visible===false);sel.forEach(id=>setProps(id,{visible:!hide}));render()}
@@ -1251,12 +1291,13 @@ function opacityKey(n){const now=Date.now();let v;
 /* several products selected at once (Ctrl+click, Shift+click) */
 let prodSel=new Set(),prodAnchor=-1;
 function paintProdSel(){document.querySelectorAll('footer .thumb').forEach(t=>t.classList.toggle('psel',prodSel.size>1&&prodSel.has(+t.dataset.i)));
-  const n=prodSel.size>1?prodSel.size:0,el=document.querySelector('footer .lbl span');if(el)el.textContent=n?`${n} selected · drag one onto a folder to move them all. Esc clears`:'Click to edit. Drag onto a folder to set its category.'}
+  const n=prodSel.size>1?prodSel.size:0,el=document.querySelector('footer .lbl span');if(el)el.textContent=n?`${n} selected · + Products makes one thumbnail per selected layout · drag onto a folder to move them · Esc clears`:'Click a product, then + Products to add more with its layout. Drag onto a folder to set its category.'}
 function clearProdSel(){if(!prodSel.size)return;prodSel=new Set();prodAnchor=-1;paintProdSel()}
 /* product menu (like Muse): duplicate, replace image, rename, delete */
 function uniqueSku(base){let n=base,k=2;while(skus.some(s=>s.sku===n))n=base+' '+k++;return n}
 function openPMenu(i,anchor){const m=$('#pmenu');m.dataset.i=i;const r=anchor.getBoundingClientRect();
-  m.innerHTML=`<div class="pmh">${esc(skus[i].sku)}</div>${i===refIndex()?'':'<button data-pm="ref">Use as reference (REF)</button>'}<button data-pm="dup">Duplicate</button><button data-pm="img">Replace image…</button><button data-pm="ren">Rename SKU…</button><div class="sep"></div><button data-pm="del" class="dang">Delete</button>`;
+  const many=prodSel.size>1&&prodSel.has(i);
+  m.innerHTML=`<div class="pmh">${esc(many?prodSel.size+' products selected':skus[i].sku)}</div><button data-pm="addtpl">${many?`Add products with these ${prodSel.size} layouts…`:'Add products with this layout…'}</button><div class="sep"></div><button data-pm="dup">Duplicate</button><button data-pm="img">Replace image…</button><button data-pm="ren">Rename SKU…</button><div class="sep"></div><button data-pm="del" class="dang">Delete</button>`;
   m.style.display='block';const mw=m.offsetWidth,mh=m.offsetHeight;m.style.left=Math.min(innerWidth-mw-6,r.left)+'px';m.style.top=Math.min(innerHeight-mh-6,r.bottom+4)+'px'}
 function closePMenu(){const m=$('#pmenu');if(m)m.style.display='none'}
 function duplicateProduct(i){const s=skus[i];if(!s)return;clearProdSel();snapshot();const c=JSON.parse(JSON.stringify(s));c.sku=uniqueSku(s.sku+' copy');
@@ -2284,11 +2325,34 @@ function fileName(pat,i,z,n){const s=skus[i];let f=pat.replace(/\{sku\}/g,s.sku)
 function updEx(){
   $('#exPick').style.display=document.querySelector('input[name=exP]:checked').value==='pick'?'grid':'none';
   document.querySelectorAll('#exFmt .fmt').forEach(b=>b.classList.toggle('on',b.dataset.f===exFmt));
-  $('#exQRow').style.visibility=exFmt==='png'?'hidden':'visible';$('#exQV').textContent=$('#exQ').value;
+  $('#exQRow').style.visibility=exFmt==='png'||exFmt==='psd'?'hidden':'visible';$('#exQV').textContent=$('#exQ').value;
   const ps=exProducts(),zs=exSizes.filter(z=>z.on),n=ps.length*zs.length;
   $('#exEx').textContent=fileName($('#exName').value,cur,zs[0]||exSizes[0],1);
   $('#exSum').innerHTML=`<b>${ps.length}</b> product${ps.length===1?'':'s'} × <b>${zs.length}</b> size${zs.length===1?'':'s'} = <b>${n}</b> image${n===1?'':'s'}${n>1?' · downloads as one ZIP file':n===1?' · downloads as one file':''}`;
 }
+/* layered PSD: folders, editable text, one layer per EM Tool layer (opens in Photoshop and Photopea) */
+function cssHex(c){const x=cssHex.c||(cssHex.c=document.createElement('canvas').getContext('2d'));x.fillStyle='#000000';x.fillStyle=String(c||'#000000');const v=x.fillStyle;
+  if(v[0]==='#')return{r:parseInt(v.slice(1,3),16),g:parseInt(v.slice(3,5),16),b:parseInt(v.slice(5,7),16)};const m=v.match(/[\d.]+/g)||[0,0,0];return{r:+m[0],g:+m[1],b:+m[2]}}
+const PS_W={'100':'Thin','200':'ExtraLight','300':'Light','400':'Regular','500':'Medium','600':'SemiBold','700':'Bold','800':'ExtraBold','900':'Black'};
+function psdTextOut(d,ox,oy,sc,offX,offY){const fs=(d.fontSize||24)*sc,lh=d.lineHeight||1.2,w=(d.width||200)*sc,h=(d.height||0)*sc,x=(ox+(d.x||0))*sc+offX,y=(oy+(d.y||0))*sc+offY;
+  let txt=String(d.text||'');if(d.caps)txt=txt.toUpperCase();const lines=txt.split('\n').length,blockH=lines*fs*lh,top=h>blockH?(h-blockH)/2:0;
+  const fam=String(d.fontFamily||'Inter'),wn=PS_W[String(d.fontStyle||'400')]||'Regular';
+  const ps=/(thin|light|regular|medium|bold|black|heavy|book)$/i.test(fam.replace(/\s+/g,''))?fam.replace(/\s+/g,''):fam.replace(/\s+/g,'')+'-'+wn+(d.italic?'Italic':'');
+  return{text:txt.replace(/\n/g,'\r'),transform:[1,0,0,1,x,y+top],shapeType:'box',boxBounds:[0,0,w,blockH+fs*.25],
+    style:{font:{name:ps},fontSize:fs,fillColor:cssHex(d.fill),leading:fs*lh,autoLeading:false,tracking:d.letterSpacing?Math.round(d.letterSpacing/(d.fontSize||24)*1000):0},
+    paragraphStyle:{justification:d.align==='center'?'center':d.align==='right'?'right':'left'}}}
+async function renderSkuPsd(i,z){if(!window.agPsd)await loadScript(AGPSD);
+  const flat=renderSku(i,z),sc=Math.min(z.w/W,z.h/H),offX=(z.w-W*sc)/2,offY=(z.h-H*sc)/2;
+  const st=new Konva.Stage({container:document.createElement('div'),width:W,height:H}),ly=new Konva.Layer();st.add(ly);
+  function leaf(d,ox,oy){const nd={...d,visible:true};delete nd.opacity;delete nd.clip;const g=new Konva.Group({x:ox,y:oy});g.add(build(nd));ly.add(g);
+    const r=g.getClientRect();if(!(r.width>0&&r.height>0)){g.destroy();return null}
+    const x0=Math.floor(r.x),y0=Math.floor(r.y),w=Math.ceil(r.x+r.width)-x0,h=Math.ceil(r.y+r.height)-y0,cv=g.toCanvas({x:x0,y:y0,width:w,height:h,pixelRatio:sc});g.destroy();
+    const L={name:d.name||d.type,canvas:cv,left:Math.round(x0*sc+offX),top:Math.round(y0*sc+offY)};
+    if(d.visible===false)L.hidden=true;if(d.opacity!=null&&d.opacity<1)L.opacity=d.opacity;if(d.clip)L.clipping=true;
+    if(d.type==='text')L.text=psdTextOut(d,ox,oy,sc,offX,offY);return L}
+  function list(arr,ox,oy){return(arr||[]).map(d=>d.type==='group'?{name:d.name||'Folder',opened:true,children:list(d.children,ox+(d.x||0),oy+(d.y||0)),...(d.visible===false?{hidden:true}:{}),...(d.opacity!=null&&d.opacity<1?{opacity:d.opacity}:{})}:leaf(d,ox,oy)).filter(Boolean)}
+  const children=list(effective(i),0,0);st.destroy();
+  return new Blob([agPsd.writePsd({width:z.w,height:z.h,canvas:flat,children},{invalidateTextLayers:true,generateThumbnail:true})],{type:'image/vnd.adobe.photoshop'})}
 function renderSku(i,z){
   if(!exStage){exStage=new Konva.Stage({container:'offscreen',width:W,height:H});exLayer=new Konva.Layer();exStage.add(exLayer)}
   exLayer.destroyChildren();addAll(exLayer,effective(i));exLayer.draw();
@@ -2314,14 +2378,14 @@ async function doExport(){
   exBusy=true;$('#exGo').disabled=true;const files=[],used={};let n=0,over=0;
   try{
     for(const i of ps)for(const z of zs){n++;$('#exSum').textContent='Rendering '+n+' of '+ps.length*zs.length+'…';await new Promise(r=>setTimeout(r,0));
-      const {b,warn}=await encode(renderSku(i,z));if(warn)over++;
+      const {b,warn}=exFmt==='psd'?{b:await renderSkuPsd(i,z),warn:false}:await encode(renderSku(i,z));if(warn)over++;
       let f=fileName(pat,i,z,n);if(used[f]){used[f]++;f=f.replace(/(\.[a-z]+)$/,'_'+used[f]+'$1')}else used[f]=1;files.push({f,b})}
     let out,name;
     if(files.length===1){out=files[0].b;name=files[0].f}
     else{if(!window.JSZip)throw{message:'ZIP library did not load'};const z=new JSZip();files.forEach(x=>z.file(x.f,x.b));out=await z.generateAsync({type:'blob'});name=(ps.length===1?skus[ps[0]].sku:'thumbnails')+'_'+today()+'.zip'}
     $('#exSum').textContent='Waiting for you to confirm the download…';
     await dl.save({filename:name,data:out});
-    exBusy=false;closeExport();toast('Exported '+files.length+' image'+(files.length>1?'s':'')+(over?' · '+over+' could not get under the size limit':''));
+    exBusy=false;closeExport();toast('Exported '+files.length+(exFmt==='psd'?' PSD file':' image')+(files.length>1?'s':'')+(over?' · '+over+' could not get under the size limit':''));
   }catch(e){exBusy=false;const c=e&&e.code;
     $('#exErr').textContent=c==='declined'?'Download cancelled.':c==='rate_limited'?'A download prompt is already open. Try again in a moment.':c==='too_large'?'That export is too large. Try fewer products or sizes.':'Export didn’t work'+(e&&e.message?': '+e.message:'.');updEx()}
   finally{exBusy=false;$('#exGo').disabled=false}
@@ -2516,7 +2580,7 @@ function setSlot(id,mode){const f=findIn(base,id);if(!f)return toast('Only layou
     toast(cats.length?'Each category now has its own version of this layer':'Now create categories in Products, then each one can have its own version');render();renderStrip();return}
   if(d.slot==='cat'||d.slot==='pimg'){if(d.slot==='pimg'&&d.type==='image')d.img=e.img;delete d.slot}
   if(!on){if(d.slot==='image')d.img=e.img;else d.text=e.text;delete d.slot;toast('This layer is now the same on every product')}
-  else if(d.type==='image'){walk(base,x=>{if(x.slot==='image'){x.img=x.img||skus[cur].img;delete x.slot}});if(e.img)skus[cur].img=e.img;d.slot='image';toast(`Each product now shows its own photo here. ${skus[cur].sku} keeps this one.`)}
+  else if(d.type==='image'){walk(base,x=>{if(x.slot==='image'){x.img=x.img||skus[cur].img;delete x.slot}});const ri=openDoc&&openDoc.kind==='campaign'?refIndex():cur;if(e.img&&!d.slot)skus[ri].img=e.img;d.slot='image';toast(`Each product now shows its own photo here. ${skus[ri].sku} keeps this one.`)}
   else{let hasName=false;walk(base,x=>{if(x.slot==='name')hasName=true});d.slot=hasName?'text':'name';if(d.slot==='text')skus.forEach(s=>{s.values=s.values||{};if(s.values[id]==null)s.values[id]=d.text});toast(d.slot==='name'?'This text is now the product name':'Each product can now have its own text here')}
   render();renderStrip()}
 
@@ -2646,7 +2710,8 @@ function wire(){
   $('#prodBtn').onclick=openProducts;$('#prClose').onclick=()=>{$('#prodDlg').style.display='none';render();renderStrip()};
   $('#prodDlg').addEventListener('click',e=>{if(e.target.id==='prodDlg'){$('#prodDlg').style.display='none';render();renderStrip()}});
   $('#prPhotos').onclick=()=>{$('#prPhotoIn').value='';$('#prPhotoIn').click()};
-  $('#prPhotoIn').onchange=async e=>{snapshot();const r=await importProducts(base,[...e.target.files],null,skus[0]&&skus[0].img,$('#prCat').value);hist.pop();addProducts(fromRef(r.skus));fillCatDatalist('#prCatList')};
+  $('#prPhotoIn').onchange=async e=>{snapshot();const r=await importProducts(base,[...e.target.files],null,skus[0]&&skus[0].img,$('#prCat').value);hist.pop();const pp=autoProductSlot();const made=fromRef(r.skus);addProducts(made);
+    setTimeout(()=>toast(`Added ${made.length} thumbnail${made.length===1?'':'s'} using the layout of ${lastTplNames.join(', ')}${pp?`. Each photo goes where “${pp.name}” is`:''}.`),50);fillCatDatalist('#prCatList')};
   $('#prSheet').onclick=()=>{$('#prSheetIn').value='';$('#prSheetIn').click()};
   $('#prSheetIn').onchange=e=>{if(!e.target.files[0])return;toast('Now pick the product photos for this sheet (or Cancel to skip).');$('#prSheetPhotos').value='';
     const go=async(ph)=>{try{const r=await importProducts(base,ph,$('#prSheetIn').files[0],skus[0]&&skus[0].img,$('#prCat').value);await addProducts(r.skus);if(r.note)toast(r.note)}catch(err){toast(err&&err.message?err.message:'Couldn’t read that spreadsheet.')}};
@@ -2738,7 +2803,8 @@ function wire(){
   $('#adjpop').addEventListener('click',e=>{const b=e.target.closest('[data-adj]');if(!b)return;if(b.dataset.adj==='reset'){const d=effMap[sel[0]];if(d){const fx=clone(d.fx||{});(($('#adjpop').dataset.kind==='bc')?['bri','con']:['hue','sat']).forEach(k=>delete fx[k]);snapshot();setProps(sel[0],{fx});render()}}$('#adjpop').style.display='none'});
   document.addEventListener('mousedown',e=>{if(!e.target.closest('#lmenu'))closeLayerMenu();if(!e.target.closest('#adjpop')&&!e.target.closest('#lmenu'))$('#adjpop').style.display='none'});
   $('#pmenu').addEventListener('click',e=>{const b=e.target.closest('[data-pm]');if(!b)return;const i=+$('#pmenu').dataset.i,a=b.dataset.pm;closePMenu();
-    if(a==='ref')setRef(i);else if(a==='dup')duplicateProduct(i);else if(a==='img')replaceProductImage(i);else if(a==='ren')renameProduct(i);else if(a==='del')deleteProduct(i)});
+    if(a==='addtpl'){const many=prodSel.size>1&&prodSel.has(i);addProductsWith(many?[...prodSel].sort((x,y)=>x-y):[i])}
+    else if(a==='ref')setRef(i);else if(a==='dup')duplicateProduct(i);else if(a==='img')replaceProductImage(i);else if(a==='ren')renameProduct(i);else if(a==='del')deleteProduct(i)});
   document.addEventListener('mousedown',e=>{if(!e.target.closest('#pmenu')&&!e.target.closest('.tmenu'))closePMenu()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePMenu();clearProdSel()}});
   $('#strip').addEventListener('contextmenu',e=>{const t=e.target.closest('.thumb');if(!t||!openDoc||openDoc.kind!=='campaign')return;e.preventDefault();openPMenu(+t.dataset.i,{getBoundingClientRect:()=>({left:e.clientX,bottom:e.clientY})})});
@@ -2746,6 +2812,7 @@ function wire(){
     ask('Rename folder','',c.name,'Rename',v=>{snapshot();c.name=v;renderCatSel&&renderCatSel();renderStrip()})});
   $('#newCatBtn').addEventListener('click',newCatFolder);
   $('#addProdBtn').addEventListener('click',addProductsFromPanel);
+  $('#saveLayBtn').addEventListener('click',saveAsLayout);
   $('footer').addEventListener('mousedown',e=>{if(e.target.closest('.tmenu,.tact'))return;const t=e.target.closest('.thumb');if(!t||e.button!==0||!openDoc||openDoc.kind!=='campaign')return;e.preventDefault();
     listDrag={kind:'prod',i:+t.dataset.i,x:e.clientX,y:e.clientY,on:false}});
   window.addEventListener('mousemove',listDragMove);
