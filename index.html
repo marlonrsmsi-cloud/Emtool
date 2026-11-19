@@ -305,7 +305,15 @@ body.rzing,body.rzing *{user-select:none}body.rzx,body.rzx *{cursor:col-resize!i
 #pmenu .pmh{padding:5px 10px 6px;font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 #pmenu button{display:block;width:100%;text-align:left;background:transparent;border:none;padding:6px 10px;border-radius:4px}
 #pmenu button:hover{background:var(--acc);color:#fff}
-#pmenu .dang{color:#ff8a80}#pmenu .sep{height:1px;background:#4a4a4a;margin:4px 0}
+#pmenu .dang{color:#ff8a80}
+#pmenu{min-width:250px}#pmenu button{display:flex;justify-content:space-between;align-items:center;gap:18px}
+#pmenu .fk{color:var(--mut);font-size:11px;white-space:nowrap}#pmenu button:hover .fk{color:#dbe9ff}
+#pmenu button:disabled{opacity:.4;cursor:default}#pmenu button:disabled:hover{background:transparent;color:inherit}
+#pmenu .hassub{position:relative}
+#pmenu .submenu{display:none;position:absolute;left:calc(100% + 2px);top:-5px;min-width:200px;max-height:60vh;overflow:auto;background:#333;border:1px solid #4a4a4a;border-radius:6px;padding:4px;box-shadow:0 10px 28px rgba(0,0,0,.6)}
+#pmenu .hassub:hover>.submenu,#pmenu .hassub.open>.submenu{display:block}
+#pmenu .fdot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:8px;vertical-align:middle}
+footer .thumb.cutsrc{opacity:.4;outline:1px dashed #9aa}#pmenu .sep{height:1px;background:#4a4a4a;margin:4px 0}
 .thumb .tacts{position:absolute;left:6px;top:calc(100% - 52px);display:none;gap:4px}
 .thumb:hover .tacts{display:flex}
 .thumb .tact{width:26px;height:24px;padding:0;border-radius:4px;background:rgba(30,30,30,.85);border:1px solid #555;color:#eee;display:flex;align-items:center;justify-content:center}
@@ -665,12 +673,12 @@ function blendSrc(d,im,w,h){const base=sharpSrc(d.img,im,w,h),bl=d.blend||{},m=+
     x.globalCompositeOperation='destination-in';x.drawImage(t,0,0);x.globalCompositeOperation='source-over'}
   if(blendCache.size>200)blendCache.clear();blendCache.set(ck,c);return c}
 /* High-quality resize: big photos are shrunk in halving steps with smoothing 'high' and kept at SHARP× the size they're drawn at, so edges stay clean in exports and when zoomed in. */
-const SHARP=2,sharpCache=new Map();
+const SHARP=2,sharpCache=new Map();let sharpPx=0;
 function sharpSrc(key,im,w,h){const nw=im.naturalWidth||im.width,nh=im.naturalHeight||im.height,tw=Math.max(1,Math.round(w*SHARP)),th=Math.max(1,Math.round(h*SHARP));
   if(nw<=tw*1.05||!key)return im;const ck=key+'|'+tw+'x'+th;if(sharpCache.has(ck))return sharpCache.get(ck);
   let c=im,cw=nw,ch=nh;while(cw/2>tw){const n=document.createElement('canvas');n.width=Math.round(cw/2);n.height=Math.round(ch/2);const x=n.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(c,0,0,n.width,n.height);c=n;cw=n.width;ch=n.height}
   const out=document.createElement('canvas');out.width=tw;out.height=th;const x=out.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(c,0,0,tw,th);
-  if(sharpCache.size>300)sharpCache.clear();sharpCache.set(ck,out);return out}
+  sharpPx+=tw*th;if(sharpCache.size>300||sharpPx>40e6){sharpCache.clear();sharpPx=tw*th}sharpCache.set(ck,out);return out}
 const FX_DEF={stroke:{on:false,color:'#ffffff',width:4},shadow:{on:false,color:'#000000',blur:12,ox:6,oy:6,op:.35}};
 function applyFx(n,d){const fx=d.fx;if(!fx)return;
   if(fx.stroke&&fx.stroke.on&&['text','rect','ellipse'].includes(d.type)){n.stroke(fx.stroke.color);n.strokeWidth(+fx.stroke.width||0);if(d.type==='text')n.fillAfterStrokeEnabled(true)}
@@ -803,7 +811,7 @@ function structRef(id){return findIn(skus[cur].extras,id)||findIn(base,id)}
 let orderWarned=false;
 function orderNote(ids){if(applyAll||orderWarned)return;if(ids.some(id=>!findIn(skus[cur].extras,id))){orderWarned=true;toast('Layer order and folders are shared, so this changes every product in the campaign. Ctrl+Z undoes it.')}}
 const layerClosed=new Set();
-window.__em={render:()=>render(),get tool(){return tool},get shape(){return topt.shape},selProbe:(fx,fy)=>{if(!pixSel)return null;const m=pixSel.mask,c=m.getContext('2d');let x0=m.width,y0=m.height,x1=0,y1=0;const d=c.getImageData(0,0,m.width,m.height).data;for(let y=0;y<m.height;y+=2)for(let x=0;x<m.width;x+=2)if(d[(y*m.width+x)*4+3]>128){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}if(x1<x0)return{empty:true};const at=(u,v)=>d[(Math.round(y0+(y1-y0)*v)*m.width+Math.round(x0+(x1-x0)*u))*4+3];return{corner:at(.03,.03),centre:at(.5,.5),w:x1-x0,h:y1-y0}},imgURL:k=>{const i=IMG[k];return i&&i.toDataURL?i.toDataURL():''},split:()=>splitLayers(),info:id=>{const i=imgInfo(id);return i&&[i.nw,i.nh]},ref:id=>!!structRef(id),get busy(){return splitBusy},get base(){return base},get skus(){return skus},get sel(){return sel},set sel(v){sel=v},get cur(){return cur},effective:i=>effective(i),nodeById:id=>nodeById(id),catOf:s=>catOf(s),renderSel:()=>renderSel()};
+window.__em={render:()=>render(),get tool(){return tool},get shape(){return topt.shape},selProbe:(fx,fy)=>{if(!pixSel)return null;const m=pixSel.mask,c=m.getContext('2d');let x0=m.width,y0=m.height,x1=0,y1=0;const d=c.getImageData(0,0,m.width,m.height).data;for(let y=0;y<m.height;y+=2)for(let x=0;x<m.width;x+=2)if(d[(y*m.width+x)*4+3]>128){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}if(x1<x0)return{empty:true};const at=(u,v)=>d[(Math.round(y0+(y1-y0)*v)*m.width+Math.round(x0+(x1-x0)*u))*4+3];return{corner:at(.03,.03),centre:at(.5,.5),w:x1-x0,h:y1-y0}},imgURL:k=>{const i=IMG[k];return i&&i.toDataURL?i.toDataURL():''},split:()=>splitLayers(),info:id=>{const i=imgInfo(id);return i&&[i.nw,i.nh]},ref:id=>!!structRef(id),get busy(){return splitBusy},get base(){return base},get skus(){return skus},get sel(){return sel},set sel(v){sel=v},get cur(){return cur},effective:i=>effective(i),nodeById:id=>nodeById(id),catOf:s=>catOf(s),renderSel:()=>renderSel(),get stripEpoch(){return stripEpoch},strip:()=>renderStrip(),stripKey:i=>{const c=stripCache.get(skus[i]);return c&&c.key}};
 function baseFloor(a){let f=0;if(a===base)while(f<a.length&&a[f].locked)f++;return f}
 function moveLayers(ids,t){
   ids=ids.filter(id=>effMap[id]);if(!ids.length||!t)return;
@@ -1036,6 +1044,7 @@ function onKey(e){if(!/^(Digit|Numpad)\d$/.test(e.code))opKey=null;
   if(k==='Alt'){e.preventDefault();tr.centeredScaling(true);return}
   if(code==='Space'){e.preventDefault();if(!spaceDown){spaceDown=true;stage.draggable(true);stage.container().style.cursor='grab'}return}
   const go=f=>{e.preventDefault();hideHint();f()};
+  if(stripActive&&stripKey(e))return;
   if(c&&code==='KeyT')return go(enterFT);
   if(c&&code==='KeyJ')return go(()=>{if(sel.length){snapshot();duplicateSel()}});
   if(c&&!s&&!a&&code==='KeyE')return go(()=>mergeLayers(sel,false));
@@ -1154,8 +1163,8 @@ const queueStrip=(()=>{let t;return()=>{clearTimeout(t);t=setTimeout(renderStrip
 function renderStrip(){
   const camp=openDoc&&openDoc.kind==='campaign';
   let idx=visIdx();if(cats.length&&catFilter==='all')idx=[...idx].sort((a,b)=>catOrder(skus[a])-catOrder(skus[b])||a-b);let h='';
-  const thumb=i=>{const s=skus[i];offLayer.destroyChildren();addAll(offLayer,effective(i));offLayer.draw();
-    const url=off.toDataURL({pixelRatio:1,mimeType:'image/jpeg',quality:.85});
+  const thumb=i=>{const s=skus[i],ef=effective(i),tk=stripEpoch+'|'+W+'x'+H+'|'+JSON.stringify(ef,(k,v)=>k==='img'&&typeof v==='string'?v+(IMG[v]?'+':'-'):v),tc=stripCache.get(s);let url;
+    if(tc&&tc.key===tk)url=tc.url;else{offLayer.destroyChildren();addAll(offLayer,ef);offLayer.draw();url=off.toDataURL({pixelRatio:1,mimeType:'image/jpeg',quality:.85});stripCache.set(s,{key:tk,url})}
     return `<div class="thumb${i===cur?' on':''}${prodSel.has(i)&&prodSel.size>1?' psel':''}" data-i="${i}"><img src="${url}" alt="${esc(s.sku)}" draggable="false">${camp?`<button class="tmenu" title="More: rename or delete" aria-label="Product menu">⋯</button><span class="tacts"><button class="tact" data-ta="dup" title="Duplicate this product" aria-label="Duplicate"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M11 3.5V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button><button class="tact" data-ta="img" title="Replace image" aria-label="Replace image"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="6" r="1.4" fill="currentColor"/><path d="M2 12l4-4 3 3 2-2 3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button></span>`:''}<div>${esc(s.sku)}_1200x1200.jpg</div></div>`};
   if(camp&&cats.length){
     const groups=(catFilter==='all'?[...cats.map(c=>c.id),'none']:[catFilter]);
@@ -1164,10 +1173,10 @@ function renderStrip(){
       h+=`<div class="sgrp${pageCat===g?' on':''}" data-cat="${g}" style="border-color:${c?c.color:'#666'}" title="Click to show every product in this folder on the canvas. Double-click to rename. Drag products here to set their category."><span class="tw" title="Open / close folder">${shut?'▸':'▾'}</span><svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M1.5 3.5h4.2l1.5 1.6h7.3v7.4h-13z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg><span class="gn">${esc(c?c.name:'No category')}</span><span class="gc">${list.length}</span></div>`;
       if(!shut)h+=list.length?list.map(thumb).join(''):`<div class="gempty" data-cat="${g}">Drag products here</div>`});
   }else h+=idx.map(thumb).join('');
-  $('#strip').innerHTML=h;renderPage();
+  $('#strip').innerHTML=h;renderPage();if(typeof paintCut==='function')paintCut();
   if(lastStripCur!==cur){lastStripCur=cur;requestAnimationFrame(()=>{const F=document.querySelector('footer'),t=F&&F.querySelector('.thumb.on');if(!t)return;const a=F.getBoundingClientRect(),b=t.getBoundingClientRect(),hd=F.querySelector('.lbl').offsetHeight;if(b.top<a.top+hd||b.bottom>a.bottom)F.scrollTop+=b.top-a.top-hd-10})}
 }
-let lastStripCur=-1;
+let lastStripCur=-1;const stripCache=new WeakMap();let stripEpoch=0;try{document.fonts.addEventListener('loadingdone',()=>{stripEpoch++})}catch(e){}
 /* layers added to one product become part of the layout, so every product gets them */
 function moveToLayout(ids){const xs=skus[cur].extras;let list=ids?xs.filter(d=>ids.includes(d.id)):xs.slice();if(!list.length)return 0;
   snapshot();list.forEach(d=>{const i=xs.indexOf(d);if(i>=0)xs.splice(i,1)});
@@ -1295,11 +1304,69 @@ function paintProdSel(){document.querySelectorAll('footer .thumb').forEach(t=>t.
 function clearProdSel(){if(!prodSel.size)return;prodSel=new Set();prodAnchor=-1;paintProdSel()}
 /* product menu (like Muse): duplicate, replace image, rename, delete */
 function uniqueSku(base){let n=base,k=2;while(skus.some(s=>s.sku===n))n=base+' '+k++;return n}
-function openPMenu(i,anchor){const m=$('#pmenu');m.dataset.i=i;const r=anchor.getBoundingClientRect();
-  const many=prodSel.size>1&&prodSel.has(i);
-  m.innerHTML=`<div class="pmh">${esc(many?prodSel.size+' products selected':skus[i].sku)}</div><button data-pm="addtpl">${many?`Add products with these ${prodSel.size} layouts…`:'Add products with this layout…'}</button><div class="sep"></div><button data-pm="dup">Duplicate</button><button data-pm="img">Replace image…</button><button data-pm="ren">Rename SKU…</button><div class="sep"></div><button data-pm="del" class="dang">Delete</button>`;
+const pmIt=(a,l,k,cls,dis)=>`<button data-pm="${a}"${cls?` class="${cls}"`:''}${dis?' disabled':''}><span>${l}</span><span class="fk">${k||''}</span></button>`;
+function folderSub(cur){const cs=[...cats.map(c=>({id:c.id,name:c.name,color:c.color})),{id:'none',name:'No category',color:'#777'}];
+  return cs.map(c=>`<button data-pm="mv:${c.id}"${c.id===cur?' disabled':''}><span><i class="fdot" style="background:${c.color}"></i>${esc(c.name)}</span><span class="fk">${c.id===cur?'here':''}</span></button>`).join('')+'<div class="sep"></div>'+pmIt('mvnew','New folder…')}
+function openPMenu(i,anchor){const m=$('#pmenu');m.dataset.i=i;m.dataset.cat='';const r=anchor.getBoundingClientRect();
+  const many=prodSel.size>1&&prodSel.has(i),n=many?prodSel.size:1,pl=n>1?`${n} products`:'',hereCat=catOf(skus[i])?skus[i].cat:'none';
+  const allIn=many?[...prodSel].every(j=>(catOf(skus[j])?skus[j].cat:'none')===hereCat):true;
+  m.innerHTML=`<div class="pmh">${esc(many?n+' products selected':skus[i].sku)}</div>`+
+    pmIt('addtpl',many?`Add products with these ${n} layouts…`:'Add products with this layout…','Ctrl+Shift+P')+'<div class="sep"></div>'+
+    pmIt('copy',many?`Copy ${pl}`:'Copy','Ctrl+C')+pmIt('cut',many?`Cut ${pl}`:'Cut','Ctrl+X')+pmIt('paste',prodClip?`Paste ${prodClip.items.length>1?prodClip.items.length+' products ':''}here`:'Paste','Ctrl+V','',!prodClip)+
+    `<div class="hassub">${pmIt('mvmenu',many?`Move ${pl} to folder`:'Move to folder','▸')}<div class="submenu">${folderSub(allIn?hereCat:null)}</div></div>`+'<div class="sep"></div>'+
+    pmIt('dup',many?`Duplicate ${pl}`:'Duplicate','Ctrl+D')+(many?'':pmIt('img','Replace image…','Ctrl+Shift+R')+pmIt('ren','Rename SKU…','F2'))+'<div class="sep"></div>'+
+    pmIt('selall','Select all products','Ctrl+A')+'<div class="sep"></div>'+pmIt('del',many?`Delete ${pl}`:'Delete','Del','dang');
   m.style.display='block';const mw=m.offsetWidth,mh=m.offsetHeight;m.style.left=Math.min(innerWidth-mw-6,r.left)+'px';m.style.top=Math.min(innerHeight-mh-6,r.bottom+4)+'px'}
 function closePMenu(){const m=$('#pmenu');if(m)m.style.display='none'}
+/* folder right-click */
+function openFolderMenu(cid,x,y){const m=$('#pmenu');m.dataset.i='';m.dataset.cat=cid;const c=cats.find(z=>z.id===cid);
+  m.innerHTML=`<div class="pmh">${esc(c?c.name:'No category')}</div>`+pmIt('fpaste',prodClip?`Paste ${prodClip.items.length} product${prodClip.items.length>1?'s':''} into this folder`:'Paste into this folder','Ctrl+V','',!prodClip)+
+    pmIt('fselall','Select everything in this folder')+'<div class="sep"></div>'+pmIt('mvnew','New folder…')+(c?pmIt('fren','Rename folder…'):'');
+  m.style.display='block';m.style.left=Math.min(innerWidth-m.offsetWidth-6,x)+'px';m.style.top=Math.min(innerHeight-m.offsetHeight-6,y)+'px'}
+/* products clipboard: copy / cut / paste, like files in folders */
+let prodClip=null,stripActive=false;
+const selTargets=i=>(prodSel.size>1&&prodSel.has(i)?[...prodSel]:[i]).filter(j=>skus[j]).sort((a,b)=>a-b);
+function copyProducts(list,cut){if(!list.length)return;prodClip={cut:!!cut,items:list.map(i=>cut?skus[i]:clone(skus[i]))};paintCut();
+  toast(`${cut?'Cut':'Copied'} ${list.length===1?skus[list[0]].sku:list.length+' products'}. Click a product or folder, then Ctrl+V to paste${cut?' (moves them there)':''}.`)}
+function paintCut(){document.querySelectorAll('footer .thumb').forEach(t=>t.classList.toggle('cutsrc',!!(prodClip&&prodClip.cut&&prodClip.items.includes(skus[+t.dataset.i]))))}
+function pasteProducts(at,cid){if(!prodClip)return;const camp=openDoc&&openDoc.kind==='campaign';if(!camp)return;
+  if(cid==null)cid=skus[at]&&catOf(skus[at])?skus[at].cat:'none';
+  snapshot();let items;const after=skus[at]||null;
+  if(prodClip.cut){items=prodClip.items.filter(o=>skus.includes(o));items.forEach(o=>skus.splice(skus.indexOf(o),1))}
+  else items=prodClip.items.map(o=>{const c=clone(o);c.sku=uniqueSku(o.sku+' copy');return c});
+  if(!items.length){prodClip=null;hist.pop();return}
+  items.forEach(o=>{delete o.ref;if(cid==='none'||!cats.some(c=>c.id===cid))delete o.cat;else o.cat=cid});
+  let pos=after&&!items.includes(after)?skus.indexOf(after)+1:skus.length;
+  if(!after||items.includes(after)){const inF=skus.map((x,j)=>j).filter(j=>(catOf(skus[j])?skus[j].cat:'none')===cid);if(inF.length)pos=inF[inF.length-1]+1}
+  skus.splice(pos,0,...items);const wasCut=prodClip.cut;if(wasCut)prodClip=null;
+  prodSel=new Set(items.length>1?items.map(o=>skus.indexOf(o)):[]);prodAnchor=-1;cur=skus.indexOf(items[0]);sel=[];pixSel=null;cancelCrop(true);lastStripCur=-1;
+  render();renderCatSel&&renderCatSel();paintProdSel();paintCut();const c=cats.find(x=>x.id===cid);
+  toast(`${wasCut?'Moved':'Pasted'} ${items.length===1?items[0].sku:items.length+' products'} ${cats.length?'into '+(c?c.name:'No category'):''}`.trim())}
+function moveProductsToFolder(list,cid){if(cid==='new'){ask('New folder','The products move into it and get its category text and images.','','Create',v=>{snapshot();const c=getOrCreateCat(v);hist.pop();setProductsCat(list,c.id);renderStrip()});return}
+  setProductsCat(list,cid)}
+function duplicateProducts(list){if(list.length===1)return duplicateProduct(list[0]);snapshot();const made=[];
+  [...list].sort((a,b)=>b-a).forEach(i=>{const c=clone(skus[i]);c.sku=uniqueSku(skus[i].sku+' copy');delete c.ref;skus.splice(i+1,0,c);made.push(c)});
+  prodSel=new Set(made.map(o=>skus.indexOf(o)));cur=skus.indexOf(made[made.length-1]);sel=[];lastStripCur=-1;render();renderCatSel&&renderCatSel();paintProdSel();toast(`Duplicated ${made.length} products`)}
+function deleteProducts(list){if(list.length===1)return deleteProduct(list[0]);if(list.length>=skus.length)return toast('A campaign needs at least one product.');
+  ask(`Delete ${list.length} products?`,'Ctrl+Z brings them back.',null,'Delete',()=>{const keep=skus[cur];snapshot();const gone=new Set(list.map(i=>skus[i]));
+    for(let j=skus.length-1;j>=0;j--)if(gone.has(skus[j]))skus.splice(j,1);clearProdSel();cur=Math.max(0,gone.has(keep)?Math.min(list[0],skus.length-1):skus.indexOf(keep));sel=[];render();renderCatSel&&renderCatSel()},true)}
+function selectAllProducts(cid){const all=skus.map((s,j)=>j).filter(j=>cid==null||(catOf(skus[j])?skus[j].cat:'none')===cid);if(!all.length)return;prodSel=new Set(all);prodAnchor=all[0];paintProdSel();toast(`${all.length} products selected`)}
+function stripKey(e){const c=e.ctrlKey||e.metaKey,s=e.shiftKey,code=e.code,k=e.key;if(!openDoc||openDoc.kind!=='campaign')return false;
+  const L=selTargets(cur),go=f=>{e.preventDefault();closePMenu();f();return true};
+  if(c&&!s&&code==='KeyC')return go(()=>copyProducts(L,false));
+  if(c&&!s&&code==='KeyX')return go(()=>copyProducts(L,true));
+  if(c&&!s&&code==='KeyV'&&prodClip)return go(()=>pasteProducts(cur));
+  if(c&&!s&&code==='KeyD')return go(()=>duplicateProducts(L));
+  if(c&&!s&&code==='KeyA')return go(()=>selectAllProducts());
+  if(c&&s&&code==='KeyP')return go(()=>addProductsWith(L));
+  if(c&&s&&code==='KeyR'&&L.length===1)return go(()=>replaceProductImage(L[0]));
+  if(c&&s&&code==='KeyM')return go(()=>{const t=document.querySelector(`footer .thumb[data-i="${cur}"]`);if(t){openPMenu(cur,t);const h=$('#pmenu .hassub');if(h)h.classList.add('open')}});
+  if(!c&&k==='F2'&&L.length===1)return go(()=>renameProduct(L[0]));
+  if(!c&&(k==='Delete'||k==='Backspace'))return go(()=>deleteProducts(L));
+  if(!c&&(k==='ArrowUp'||k==='ArrowDown'||k==='ArrowLeft'||k==='ArrowRight')){const vis=[...document.querySelectorAll('footer .thumb')].map(t=>+t.dataset.i),p=vis.indexOf(cur),d=(k==='ArrowUp'||k==='ArrowLeft')?-1:1,n=vis[p+d];
+    return go(()=>{if(n!=null){clearProdSel();if(typeof goProduct==='function')goProduct(n);else{cur=n;render()}}})}
+  if(k==='Escape'&&prodClip){prodClip=null;paintCut();return go(()=>{})}
+  return false}
 function duplicateProduct(i){const s=skus[i];if(!s)return;clearProdSel();snapshot();const c=JSON.parse(JSON.stringify(s));c.sku=uniqueSku(s.sku+' copy');
   skus.splice(i+1,0,c);cur=i+1;sel=[];pixSel=null;cancelCrop(true);lastStripCur=-1;render();renderCatSel&&renderCatSel();
   toast(`Duplicated as ${c.sku}. Click ⋯ → Replace image… to swap the photo, and rename the SKU.`)}
@@ -1410,7 +1477,14 @@ function newCatFolder(){ask('New category folder','Products you drag into this f
   snapshot();const c=getOrCreateCat(v);renderCatSel&&renderCatSel();renderStrip();toast(`Folder "${c.name}" added. Drag products onto it.`)})}
 
 /* ---------- adding your own images ---------- */
-function readImage(file){return new Promise((res,rej)=>{if(!file||!/^image\//.test(file.type))return rej('not image');const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const key='up_'+uid();IMG[key]=im;assets[key]=r.result;assetNames[key]=(file.name||'Pasted image').replace(/\.[^.]+$/,'');res(key)};im.onerror=()=>rej('bad');im.src=r.result};r.readAsDataURL(file)})}
+const IMG_MAX=3000;
+function capImage(im,src){const w=im.naturalWidth||im.width,h=im.naturalHeight||im.height,m=Math.max(w,h);if(!(m>IMG_MAX))return Promise.resolve({im,src});
+  const k=IMG_MAX/m,tw=Math.max(1,Math.round(w*k)),th=Math.max(1,Math.round(h*k));let c=im,cw=w,ch=h;
+  while(cw/2>tw){const n=document.createElement('canvas');n.width=Math.round(cw/2);n.height=Math.round(ch/2);const x=n.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(c,0,0,n.width,n.height);c=n;cw=n.width;ch=n.height}
+  const o=document.createElement('canvas');o.width=tw;o.height=th;const x=o.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(c,0,0,tw,th);
+  const jpg=/^data:image\/jpe?g/i.test(src||''),url=o.toDataURL(jpg?'image/jpeg':'image/png',.92);
+  return new Promise(res=>{const n=new Image();n.onload=()=>res({im:n,src:url});n.onerror=()=>res({im,src});n.src=url})}
+function readImage(file){return new Promise((res,rej)=>{if(!file||!/^image\//.test(file.type))return rej('not image');const r=new FileReader();r.onload=()=>{const im0=new Image();im0.onload=async()=>{const {im,src}=await capImage(im0,r.result);const key='up_'+uid();IMG[key]=im;assets[key]=src;assetNames[key]=(file.name||'Pasted image').replace(/\.[^.]+$/,'');res(key)};im0.onerror=()=>rej('bad');im0.src=r.result};r.readAsDataURL(file)})}
 async function addImages(files,pt){
   const psds=[...files].filter(f=>/\.psd$/i.test(f.name)||f.type==='image/vnd.adobe.photoshop');
   const pdfs=[...files].filter(f=>/\.pdf$/i.test(f.name)||f.type==='application/pdf');
@@ -2649,9 +2723,10 @@ let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add
 function hideHint(){$('#focushint').style.display='none'}
 function save(){persistNow(true)}
 function load(){try{const s=localStorage.getItem('tf-proto');if(s){const o=JSON.parse(s);legacyWork=o;fontStore=o.fonts||[]}}catch(e){}}
-function loadAssets(){return Promise.all(Object.entries(assets).map(([k,src])=>new Promise(res=>{const i=new Image();i.onload=()=>{IMG[k]=i;res()};i.onerror=res;i.src=src})))}
-const SC=[['Ctrl + click','Select the exact layer under the cursor, even inside a group'],['Shift + click','Add or remove a layer from the selection'],['Drag on an empty spot','Draw a box to select every layer it touches (Shift adds, Ctrl picks layers inside groups)'],['Alt + drag','Duplicate and drag the copy'],['Shift + drag','Move in a straight line; keep proportions when resizing'],['Alt + resize handle','Resize from the centre (add Shift to keep proportions)'],['Ctrl + Alt + T','Free transform with rotation (Ctrl+T is kept by the browser). Enter confirms, Esc cancels'],['Arrow / Shift + Arrow','Nudge 1px / 10px'],['Ctrl + J','Duplicate layer'],['Ctrl + G / Ctrl + Shift + G','Group / ungroup'],['Ctrl + [ / ]','Move layer down / up (add Shift for bottom / top)'],['Ctrl + Z / Ctrl + Shift + Z / Ctrl + Y','Undo / redo'],['Space + drag','Pan'],['Ctrl + + / − / 0 / 1','Zoom in / out / fit / 100%'],['Alt + scroll or Ctrl + scroll','Zoom at the cursor'],['Ctrl + ; / Ctrl + \'','Guides / grid on or off'],['Hold Ctrl while dragging','Turn snapping off'],['Drag from a ruler','Pull out a guide (layers snap to it); double-click the ruler corner to clear guides'],['Delete / Backspace','Delete layer (hides it if you are editing one product)'],['Esc','Deselect (cancels a crop or free transform first)'],['Ctrl + E','Merge down / merge selected layers'],['Ctrl + Alt + G','Create / release clipping mask'],['Right-click a layer','Layer menu: duplicate, merge, rasterize, clipping mask, brightness / contrast, hue / saturation'],['V / T','Move tool / text tool'],['M L W C I J S B E G R O U H Z','Toolbox tools (turn the toolbox on with Tools). Shift + the same key switches to the next tool in that group'],['[ / ]','Brush smaller / bigger'],['Shift + [ / Shift + ]','Brush softer / harder (25% steps)'],['1 … 9 / 0','Brush opacity or strength 10% … 90% / 100%. Type two numbers quickly for an exact value, e.g. 4 then 5 = 45%'],['X / D','Swap foreground and background colours / reset to black and white'],['Ctrl + A / Ctrl + D','Select all / deselect'],['Ctrl + S','Save'],['Ctrl + Alt + Shift + W','Export images (sizes, file type, quality, file names)'],['Ctrl + V','Paste an image as a new layer (or drag image files onto the canvas, or use Add image)'],['Double-click text','Edit text; Enter to finish, Shift+Enter for a new line, Esc to cancel'],['?','This list']];
-function openModal(){$('#sctable').innerHTML=SC.map(([k,v])=>`<tr><td>${k.split(' / ').map(x=>x.split(' + ').map(y=>`<span class="kbd">${esc(y)}</span>`).join(' + ')).join(' / ')}</td><td>${esc(v)}</td></tr>`).join('');$('#modal').style.display='flex'}
+function loadAssets(){return Promise.all(Object.entries(assets).map(([k,src])=>new Promise(res=>{const i=new Image();i.onload=async()=>{const c=await capImage(i,src);IMG[k]=c.im;if(c.src!==src)assets[k]=c.src;res()};i.onerror=res;i.src=src})))}
+const SC_PROD=[['#','Products panel (click a product first)'],['Right-click a product','Product menu: add with this layout, copy, cut, paste, move to folder, duplicate, rename, delete'],['Right-click a folder','Paste into the folder, select everything in it, new folder, rename'],['Ctrl + click / Shift + click','Select several products'],['Ctrl + C','Copy the selected products'],['Ctrl + X','Cut the selected products (paste moves them)'],['Ctrl + V','Paste next to the clicked product, in its folder'],['Ctrl + D','Duplicate the selected products'],['Ctrl + Shift + M','Move to folder'],['Ctrl + Shift + P','Add products with this layout'],['Ctrl + Shift + R','Replace the product image'],['F2','Rename SKU'],['Delete','Delete the selected products'],['Ctrl + A','Select all products'],['↑ / ↓','Previous / next product'],['Esc','Clear the selection or cancel a cut'],['#','Canvas and layers']];
+const SC=[...SC_PROD,['Ctrl + click','Select the exact layer under the cursor, even inside a group'],['Shift + click','Add or remove a layer from the selection'],['Drag on an empty spot','Draw a box to select every layer it touches (Shift adds, Ctrl picks layers inside groups)'],['Alt + drag','Duplicate and drag the copy'],['Shift + drag','Move in a straight line; keep proportions when resizing'],['Alt + resize handle','Resize from the centre (add Shift to keep proportions)'],['Ctrl + Alt + T','Free transform with rotation (Ctrl+T is kept by the browser). Enter confirms, Esc cancels'],['Arrow / Shift + Arrow','Nudge 1px / 10px'],['Ctrl + J','Duplicate layer'],['Ctrl + G / Ctrl + Shift + G','Group / ungroup'],['Ctrl + [ / ]','Move layer down / up (add Shift for bottom / top)'],['Ctrl + Z / Ctrl + Shift + Z / Ctrl + Y','Undo / redo'],['Space + drag','Pan'],['Ctrl + + / − / 0 / 1','Zoom in / out / fit / 100%'],['Alt + scroll or Ctrl + scroll','Zoom at the cursor'],['Ctrl + ; / Ctrl + \'','Guides / grid on or off'],['Hold Ctrl while dragging','Turn snapping off'],['Drag from a ruler','Pull out a guide (layers snap to it); double-click the ruler corner to clear guides'],['Delete / Backspace','Delete layer (hides it if you are editing one product)'],['Esc','Deselect (cancels a crop or free transform first)'],['Ctrl + E','Merge down / merge selected layers'],['Ctrl + Alt + G','Create / release clipping mask'],['Right-click a layer','Layer menu: duplicate, merge, rasterize, clipping mask, brightness / contrast, hue / saturation'],['V / T','Move tool / text tool'],['M L W C I J S B E G R O U H Z','Toolbox tools (turn the toolbox on with Tools). Shift + the same key switches to the next tool in that group'],['[ / ]','Brush smaller / bigger'],['Shift + [ / Shift + ]','Brush softer / harder (25% steps)'],['1 … 9 / 0','Brush opacity or strength 10% … 90% / 100%. Type two numbers quickly for an exact value, e.g. 4 then 5 = 45%'],['X / D','Swap foreground and background colours / reset to black and white'],['Ctrl + A / Ctrl + D','Select all / deselect'],['Ctrl + S','Save'],['Ctrl + Alt + Shift + W','Export images (sizes, file type, quality, file names)'],['Ctrl + V','Paste an image as a new layer (or drag image files onto the canvas, or use Add image)'],['Double-click text','Edit text; Enter to finish, Shift+Enter for a new line, Esc to cancel'],['?','This list']];
+function openModal(){$('#sctable').innerHTML=SC.map(([k,v])=>k==='#'?`<tr><th colspan="2" style="text-align:left;padding:12px 0 4px;color:var(--acc)">${esc(v)}</th></tr>`:`<tr><td>${k.split(' / ').map(x=>x.split(' + ').map(y=>`<span class="kbd">${esc(y)}</span>`).join(' + ')).join(' / ')}</td><td>${esc(v)}</td></tr>`).join('');$('#modal').style.display='flex'}
 function closeModal(){$('#modal').style.display='none'}
 
 /* ---------- wiring ---------- */
@@ -2802,12 +2877,23 @@ function wire(){
   $('#adjpop').addEventListener('input',e=>{const el=e.target.closest('[data-fx]');if(!el)return;const v=$('#adjpop').querySelector(`[data-v="${el.dataset.fx}"]`);if(v)v.textContent=el.value;changeFx(el)});
   $('#adjpop').addEventListener('click',e=>{const b=e.target.closest('[data-adj]');if(!b)return;if(b.dataset.adj==='reset'){const d=effMap[sel[0]];if(d){const fx=clone(d.fx||{});(($('#adjpop').dataset.kind==='bc')?['bri','con']:['hue','sat']).forEach(k=>delete fx[k]);snapshot();setProps(sel[0],{fx});render()}}$('#adjpop').style.display='none'});
   document.addEventListener('mousedown',e=>{if(!e.target.closest('#lmenu'))closeLayerMenu();if(!e.target.closest('#adjpop')&&!e.target.closest('#lmenu'))$('#adjpop').style.display='none'});
-  $('#pmenu').addEventListener('click',e=>{const b=e.target.closest('[data-pm]');if(!b)return;const i=+$('#pmenu').dataset.i,a=b.dataset.pm;closePMenu();
+  $('#pmenu').addEventListener('click',e=>{const b=e.target.closest('[data-pm]');if(!b||b.disabled)return;const m=$('#pmenu'),i=+m.dataset.i,fc=m.dataset.cat,a=b.dataset.pm;
+    if(a==='mvmenu'){b.closest('.hassub').classList.toggle('open');return}
+    closePMenu();stripActive=true;const L=fc?[]:selTargets(i);
+    if(a==='fpaste')return pasteProducts(-1,fc);if(a==='fselall')return selectAllProducts(fc);
+    if(a==='fren'){const c=cats.find(x=>x.id===fc);if(c)ask('Rename folder','',c.name,'Rename',v=>{snapshot();c.name=v;renderCatSel&&renderCatSel();renderStrip()});return}
+    if(a==='mvnew'){if(fc)return newCatFolder();return moveProductsToFolder(L,'new')}
+    if(a.startsWith('mv:'))return moveProductsToFolder(L,a.slice(3));
+    if(a==='copy')return copyProducts(L,false);if(a==='cut')return copyProducts(L,true);if(a==='paste')return pasteProducts(i);
+    if(a==='selall')return selectAllProducts();
+    if(a==='dup')return duplicateProducts(L);if(a==='del')return deleteProducts(L);
     if(a==='addtpl'){const many=prodSel.size>1&&prodSel.has(i);addProductsWith(many?[...prodSel].sort((x,y)=>x-y):[i])}
     else if(a==='ref')setRef(i);else if(a==='dup')duplicateProduct(i);else if(a==='img')replaceProductImage(i);else if(a==='ren')renameProduct(i);else if(a==='del')deleteProduct(i)});
   document.addEventListener('mousedown',e=>{if(!e.target.closest('#pmenu')&&!e.target.closest('.tmenu'))closePMenu()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePMenu();clearProdSel()}});
-  $('#strip').addEventListener('contextmenu',e=>{const t=e.target.closest('.thumb');if(!t||!openDoc||openDoc.kind!=='campaign')return;e.preventDefault();openPMenu(+t.dataset.i,{getBoundingClientRect:()=>({left:e.clientX,bottom:e.clientY})})});
+  document.addEventListener('mousedown',e=>{stripActive=!!(e.target.closest&&e.target.closest('footer,#pmenu'))},true);
+  $('#strip').addEventListener('contextmenu',e=>{const f=e.target.closest('.sgrp,.gempty');if(f&&!e.target.closest('.thumb')&&openDoc&&openDoc.kind==='campaign'){e.preventDefault();stripActive=true;openFolderMenu(f.dataset.cat,e.clientX,e.clientY);return}
+    const t=e.target.closest('.thumb');if(!t||!openDoc||openDoc.kind!=='campaign')return;e.preventDefault();stripActive=true;openPMenu(+t.dataset.i,{getBoundingClientRect:()=>({left:e.clientX,bottom:e.clientY})})});
   $('#strip').addEventListener('dblclick',e=>{const f=e.target.closest('.sgrp');if(!f)return;const c=cats.find(x=>x.id===f.dataset.cat);if(!c)return;catClosed.delete(c.id);
     ask('Rename folder','',c.name,'Rename',v=>{snapshot();c.name=v;renderCatSel&&renderCatSel();renderStrip()})});
   $('#newCatBtn').addEventListener('click',newCatFolder);
