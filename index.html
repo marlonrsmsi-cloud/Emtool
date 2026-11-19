@@ -335,7 +335,7 @@ body.rzing,body.rzing *{user-select:none}body.rzx,body.rzx *{cursor:col-resize!i
   <button class="ed" id="toolsBtn" title="Show or hide the Photopea-style toolbox">Tools</button>
   <button class="ed camponly" id="exportBtn" title="Export images (Ctrl+Alt+Shift+W)">Export</button>
   <button class="ed" id="addImgBtn" title="Add image (or drag a file onto the canvas, or Ctrl+V)">+ Image</button>
-  <input type="file" id="fileIn" accept="image/*,.psd" multiple hidden><input type="file" id="psdNewIn" accept=".psd" hidden>
+  <input type="file" id="fileIn" accept="image/*,.psd,.pdf" multiple hidden><input type="file" id="psdNewIn" accept=".psd,.pdf" hidden>
   <input type="file" id="replIn" accept="image/*" hidden>
   <button class="ed" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
   <button class="ed" id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
@@ -345,7 +345,7 @@ body.rzing,body.rzing *{user-select:none}body.rzx,body.rzx *{cursor:col-resize!i
 <div id="home">
   <div class="hhead"><h2>Campaigns</h2><button id="newCampBtn" class="pri">+ New campaign</button></div>
   <div id="campGrid" class="cards"></div>
-  <div class="hhead"><h2>Layouts</h2><button id="psdLayBtn" title="Make a layout from a Photoshop file, keeping its layers">From PSD…</button><button id="newLayBtn">+ New layout</button></div>
+  <div class="hhead"><h2>Layouts</h2><button id="psdLayBtn" title="Make a layout from a Photoshop (.psd) or PDF file, keeping its layers and text">From PSD / PDF…</button><button id="newLayBtn">+ New layout</button></div>
   <div id="layGrid" class="cards"></div>
   <p class="muted" style="line-height:1.6">Everything is saved automatically in this browser. Layouts are your templates; a campaign copies a layout and adds your products (SKUs).</p>
 </div>
@@ -597,7 +597,8 @@ function build(d){
   else if(d.type==='text'){
     let fs=d.fontSize;
     let txt=d.text||'';if(d.caps)txt=txt.toUpperCase();if(d.vertical)txt=txt.split('\n').map(l=>[...l].join('\n')).join('\n\n');
-    const base={text:txt,width:d.width,fontSize:fs,fontFamily:fontCss(d.fontFamily),fontStyle:(d.italic?'italic ':'')+(d.fontStyle||'400'),align:d.align||'left',lineHeight:d.lineHeight||1.15,letterSpacing:d.letterSpacing||0,textDecoration:d.textDecoration||'',wrap:'word'};
+    const rf=resolveFont(d.fontFamily,d.fontStyle||'400');
+    const base={text:txt,width:d.width,fontSize:fs,fontFamily:fontCss(rf.family),fontStyle:(d.italic?'italic ':'')+rf.weight,align:d.align||'left',lineHeight:d.lineHeight||1.15,letterSpacing:d.letterSpacing||0,textDecoration:d.textDecoration||'',wrap:'word'};
     if(d.autoFit){const t=new Konva.Text(base);while(t.height()>d.height&&fs>12){fs-=2;t.fontSize(fs)}t.destroy()}
     const bend=d.warp&&d.warp.style==='arc'?(+d.warp.bend||0):0;
     if(bend&&!d.vertical){const w=d.width,y0=d.height/2+fs*.35,sg=bend/100*w*.35;
@@ -1277,7 +1278,8 @@ function newCatFolder(){ask('New category folder','Products you drag into this f
 function readImage(file){return new Promise((res,rej)=>{if(!file||!/^image\//.test(file.type))return rej('not image');const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const key='up_'+uid();IMG[key]=im;assets[key]=r.result;assetNames[key]=(file.name||'Pasted image').replace(/\.[^.]+$/,'');res(key)};im.onerror=()=>rej('bad');im.src=r.result};r.readAsDataURL(file)})}
 async function addImages(files,pt){
   const psds=[...files].filter(f=>/\.psd$/i.test(f.name)||f.type==='image/vnd.adobe.photoshop');
-  if(psds.length){for(const f of psds)await openPsd(f,false);files=[...files].filter(f=>!psds.includes(f));if(!files.length)return}
+  const pdfs=[...files].filter(f=>/\.pdf$/i.test(f.name)||f.type==='application/pdf');
+  if(psds.length||pdfs.length){for(const f of psds)await openPsd(f,false);for(const f of pdfs)await openPdf(f,false);files=[...files].filter(f=>!psds.includes(f)&&!pdfs.includes(f));if(!files.length)return}
   const list=[...files].filter(f=>/^image\//.test(f.type));
   if(!list.length)return toast('That file is not an image. Use PNG, JPG, WebP or SVG.');
   const keys=[];for(const f of list){try{keys.push(await readImage(f))}catch(e){}}
@@ -1334,6 +1336,35 @@ async function aiRemoveBg(){
 }
 
 
+
+/* ---------- open PDF files: each page becomes layers (real text from the PDF, graphics as pieces) ---------- */
+const PDFJS='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs',PDFJS_WORKER='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+let splitPreset=null,pdfMissing=new Set();
+async function pdfLib(){const m=await import(PDFJS);m.GlobalWorkerOptions.workerSrc=PDFJS_WORKER;return m}
+async function renderPdfPage(lib,doc,n){const page=await doc.getPage(n),vp0=page.getViewport({scale:1}),scale=Math.min(4,2000/Math.max(vp0.width,vp0.height)),vp=page.getViewport({scale});
+  const c=blankSize(Math.round(vp.width),Math.round(vp.height)),cx=c.getContext('2d');cx.fillStyle='#ffffff';cx.fillRect(0,0,c.width,c.height);
+  await page.render({canvasContext:cx,viewport:vp}).promise;
+  const tc=await page.getTextContent(),words=[];
+  tc.items.forEach(it=>{const str=(it.str||'').replace(/\s+/g,' ').trim();if(!str)return;const t=lib.Util.transform(vp.transform,it.transform),fh=Math.hypot(t[2],t[3]);if(fh<3)return;
+    const st=tc.styles[it.fontName]||{},asc=st.ascent||.8,desc=st.descent||-.2,w=(it.width||0)*scale;if(w<=0)return;
+    let font=null;try{const fo=page.commonObjs.get(it.fontName);font=fo&&(fo.name||fo.loadedName)}catch(e){}
+    words.push({text:str,conf:99,size:fh,font,bb:{x0:Math.round(t[4]),y0:Math.round(t[5]-asc*fh),x1:Math.round(t[4]+w),y1:Math.round(t[5]-desc*fh)}})});
+  return{canvas:c,words,w:vp.width,h:vp.height}}
+async function openPdf(file,asNewLayout){
+  if(splitBusy)return toast('Wait for the current split to finish.');
+  toast('Opening '+file.name+'…');let lib,doc;
+  try{lib=await pdfLib();doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise}catch(e){console.warn(e);return toast('Couldn’t read that PDF. Check you are online the first time (the PDF reader downloads once).')}
+  const name=file.name.replace(/\.pdf$/i,''),pages=asNewLayout?Math.min(doc.numPages,20):1;pdfMissing=new Set();let made=0;
+  for(let n=1;n<=pages;n++){toast(`Reading page ${n} of ${pages}…`);let pg;try{pg=await renderPdfPage(lib,doc,n)}catch(e){console.warn(e);continue}
+    const k=Math.min(W/pg.w,H/pg.h),iw=R(pg.w*k),ih=R(pg.h*k),key='px_'+uid();IMG[key]=pg.canvas;assetNames[key]=name+(pages>1?' p'+n:'');
+    const img={id:uid(),name:pages>1?'Page '+n:name,type:'image',img:key,x:R((W-iw)/2),y:R((H-ih)/2),width:iw,height:ih};
+    if(asNewLayout){const l={id:'lay_'+uid(),name:name+(doc.numPages>1?' – page '+n:''),base:[img],sampleName:'Product name here',sampleImg:'washer',updatedAt:now()};store.layouts.push(l);openEditor('layout',l.id)}
+    else{snapshot();if(applyAll)base.push(img);else skus[cur].extras.push(img)}
+    sel=[img.id];render();splitPreset={words:pg.words};await splitLayers();splitPreset=null;made++;persistNow&&persistNow(false)}
+  const msg=[`Opened ${name}: ${made} page${made===1?'':'s'}${asNewLayout&&made>1?' as separate layouts (see Home)':''}.`];
+  if(doc.numPages>pages&&asNewLayout)msg.push(`Only the first ${pages} pages were opened.`);if(!asNewLayout&&doc.numPages>1)msg.push('Only page 1 was added. Use From PDF… on Home to open every page.');
+  if(pdfMissing.size)msg.push(`Upload these fonts in the text bar to see them right: ${[...pdfMissing].slice(0,4).join(', ')}.`);
+  toast(msg.join(' '));setTimeout(()=>{const t=$('#toast');if(t)clearTimeout(toastT),toastT=setTimeout(()=>t.classList.remove('show'),9000)},0)}
 /* ---------- open PSD files (like Photopea): real layers, folders, text, shapes, effects ---------- */
 const AGPSD='https://cdn.jsdelivr.net/npm/ag-psd@34.2.1/dist/bundle.js';
 const psdNorm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -1344,7 +1375,7 @@ function psdFont(ps,fauxBold){ps=String(ps||'Inter');const fonts=allFonts();
   for(const [k,v] of PSD_WEIGHTS)if(sty.replace(/italic|oblique/g,'').includes(k)){weight=v;break}if(fauxBold)weight='700';
   const spaced=fam.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/MT$|PS$/,'').trim();
   const hit=fonts.find(f=>psdNorm(f)===psdNorm(fam)||psdNorm(f)===psdNorm(spaced));
-  return{family:hit||spaced,weight,italic,found:!!hit}}
+  const rf=resolveFont(hit||fam,weight);return{family:hit||fam,weight,italic,found:!!hit||rf.found}}
 const psdHex=c=>{if(!c)return'#000000';if('fr' in c)return toHex([c.fr*255,c.fg*255,c.fb*255]);if('r' in c)return toHex([c.r,c.g,c.b]);if('k' in c){const k=1-c.k/100;return toHex([255*(1-c.c/100)*k,255*(1-c.m/100)*k,255*(1-c.y/100)*k])}return'#000000'};
 const psdVal=u=>u==null?0:typeof u==='number'?u:(u.value||0);
 async function readPsdFile(file){if(!window.agPsd)await loadScript(AGPSD);
@@ -1653,7 +1684,10 @@ async function splitLayers(){
     const sc=Math.min(1,2000/Math.max(info.nw,info.nh)),Wp=Math.round(info.nw*sc),Hp=Math.round(info.nh*sc);
     const C=blankSize(Wp,Hp),cx=C.getContext('2d');cx.imageSmoothingQuality='high';cx.drawImage(info.src,0,0,Wp,Hp);
     const ID=cx.getImageData(0,0,Wp,Hp),P=ID.data;
-    // 2) read the text
+    // 2) read the text (a PDF already knows its text, so it skips this)
+    let items;
+    if(splitPreset){const ps=splitPreset;splitPreset=null;items=buildItems(ps.words.map(w=>({...w,bb:{x0:w.bb.x0*sc,y0:w.bb.y0*sc,x1:w.bb.x1*sc,y1:w.bb.y1*sc},size:w.size*sc})),P,Wp,Hp)}
+    else{
     toast(ocrWorker?'Reading the text…':'Loading the text reader (about 3 MB, first time only)…');
     const wk=await ocrReady();
     const vars=variantCanvases(C,P,Wp,Hp),words=[];
@@ -1670,7 +1704,7 @@ async function splitLayers(){
         if(t&&t.length<=2&&/^[A-Za-z0-9+%#&*-]+$/.test(t)&&data.confidence>=55){const w={text:t,conf:data.confidence,bb:{x0:g.x0,y0:g.y0,x1:g.x1,y1:g.y1}};
           if(side<0)ln.ws.unshift(w);else ln.ws.push(w);ln.text=ln.ws.map(q=>q.text).join(' ');ln.bb={x0:Math.min(ln.bb.x0,g.x0),y0:ln.bb.y0,x1:Math.max(ln.bb.x1,g.x1),y1:ln.bb.y1};
           it.bb={x0:Math.min(it.bb.x0,g.x0),y0:it.bb.y0,x1:Math.max(it.bb.x1,g.x1),y1:it.bb.y1}}}catch(_){}}
-    const items=items0;
+    items=items0}
     // 3) text colour, size, weight and a mask of the letters
     const tmask=new Uint8Array(Wp*Hp),k=d.width/info.im.width()*info.im.width()/Wp,ky=d.height/Hp,kx=d.width/Wp,texts=[];
     const flat=[];
@@ -1686,12 +1720,14 @@ async function splitLayers(){
       flat.push({bb,e,bg,uni:ringUniform(P,Wp,Hp,{x0:bb.x0-e,y0:bb.y0-e,x1:bb.x1+e,y1:bb.y1+e},2,bg)});
       if(!far.length)return;far.sort((a,b)=>b[0]-a[0]);const top=far.slice(0,Math.max(1,far.length>>1)),col=[0,1,2].map(q=>top.reduce((s,f)=>s+f[1][q],0)/top.length);
       const lineH=median(it.lines.map(l=>l.h)),ratio=ink/Math.max(1,area);
-      const weight=ratio>.36?'800':ratio>.27?'700':ratio>.2?'600':'500';
-      let fs=lineH*1.3;const widest=it.lines.reduce((a,l)=>l.bb.x1-l.bb.x0>a.bb.x1-a.bb.x0?l:a);
-      const mw=measureW(widest.text,fs,weight,'Inter'),wantW=widest.bb.x1-widest.bb.x0;let lsp=0;
+      const pw=it.lines[0].ws.find(w=>w.font),pf=pw?psdFont(String(pw.font).replace(/^[A-Z]{6}\+/,''),false):null;
+      let weight=pf?pf.weight:ratio>.36?'800':ratio>.27?'700':ratio>.2?'600':'500';
+      let fs=pw?median(it.lines.flatMap(l=>l.ws).filter(w=>w.size).map(w=>w.size)):lineH*1.3;const widest=it.lines.reduce((a,l)=>l.bb.x1-l.bb.x0>a.bb.x1-a.bb.x0?l:a);
+      const mw=measureW(widest.text,fs,weight,pf?pf.family:'Inter'),wantW=widest.bb.x1-widest.bb.x0;let lsp=0;
       // spaced-out lettering ("F R E E"): keep the size from the height and copy the spacing instead
-      if(mw>0&&wantW/mw>1.3&&widest.text.length>1&&!/\s/.test(widest.text)){lsp=(wantW-mw)/(widest.text.length-1)}
-      else if(mw>0)fs=fs*Math.max(.72,Math.min(1.4,wantW/mw));
+      if(!pw&&mw>0&&wantW/mw>1.3&&widest.text.length>1&&!/\s/.test(widest.text)){lsp=(wantW-mw)/(widest.text.length-1)}
+      else if(!pw&&mw>0)fs=fs*Math.max(.72,Math.min(1.4,wantW/mw));
+      if(pf&&!pf.found)pdfMissing.add(pf.family);
       const cs=it.lines.map(l=>(l.bb.x0+l.bb.x1)/2),ls=it.lines.map(l=>l.bb.x0),rs=it.lines.map(l=>l.bb.x1),spread=a=>Math.max(...a)-Math.min(...a);
       const align=it.lines.length<2?'center':spread(cs)<=Math.min(spread(ls),spread(rs))+2?'center':spread(ls)<spread(rs)?'left':'right';
       const lh=it.lines.length>1?Math.max(.9,Math.min(1.6,((it.lines[it.lines.length-1].bb.y0-it.lines[0].bb.y0)/(it.lines.length-1))/fs)):1.15;
@@ -1699,7 +1735,7 @@ async function splitLayers(){
       const cyy=(bb.y0+bb.y1)/2;
       texts.push({id:uid(),name:it.lines.map(l=>l.text).join(' ').slice(0,28),type:'text',
         x:R((bb.x0-padX)*kx),y:R((cyy-bh/2)*ky),width:R(bw*kx),height:R(bh*ky),
-        text:it.lines.map(l=>l.text).join('\n'),fontFamily:'Inter',fontSize:R(fs*ky),fontStyle:weight,fill:toHex(col),align,lineHeight:+lh.toFixed(2),...(lsp?{letterSpacing:R(lsp*kx)}:{})})});
+        text:it.lines.map(l=>l.text).join('\n'),fontFamily:pf?pf.family:'Inter',fontSize:R(fs*ky),fontStyle:weight,...(pf&&pf.italic?{italic:true}:{}),fill:toHex(col),align,lineHeight:+lh.toFixed(2),...(lsp?{letterSpacing:R(lsp*kx)}:{})})});
     const fillMask=dilate(tmask,Wp,Hp,Math.max(2,Math.round(Math.min(Wp,Hp)/400)));
     // text on a solid colour (pills, badges): paint it with that colour, so no ghost of the letters is left
     flat.forEach(f=>{if(!f.uni)return;const r=Math.max(2,Math.round(Math.min(Wp,Hp)/400));
@@ -1780,10 +1816,18 @@ const BUILTIN_FONTS=['Inter','Poppins','Montserrat','Roboto','Oswald','Bebas Neu
 let fontStore=[],curEdit=null;const textDef={fontFamily:'Inter',fontStyle:'600',italic:false,fontSize:44,fill:'#141414',align:'left'};
 const fontCss=f=>{f=f||'Inter';return /[\s\d]/.test(f)?'"'+f+'"':f};
 function allFonts(){return[...fontStore.map(f=>f.name),...BUILTIN_FONTS]}
+/* match a family + weight to the fonts in this browser; "LGSmartUI" weight 700 finds an uploaded "LGSmartUI Bold" */
+const RF_WORDS={'100':['thin','hairline'],'200':['extralight','ultralight'],'300':['light'],'400':['regular','book','roman','normal',''],'500':['medium'],'600':['semibold','demibold','demi'],'700':['bold'],'800':['extrabold','ultrabold','heavy'],'900':['black']};
+function resolveFont(fam,weight){fam=fam||'Inter';weight=String(weight||'400');const n=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,''),all=allFonts();
+  const ex=all.find(f=>f.toLowerCase()===fam.toLowerCase());if(ex){const named=fontStore.some(f=>f.name===ex)&&Object.values(RF_WORDS).flat().filter(Boolean).some(w=>n(ex).endsWith(w));return{family:ex,weight:named?'400':weight,found:true}}
+  const nf=n(fam),cands=fontStore.map(f=>f.name).filter(f=>n(f).startsWith(nf));
+  if(cands.length){const words=RF_WORDS[weight]||[''];const hit=cands.find(f=>words.includes(n(f).slice(nf.length)));if(hit)return{family:hit,weight:'400',found:true};return{family:cands[0],weight,found:true}}
+  return{family:fam,weight,found:false}}
 async function registerFont(name,buf){const ff=new FontFace(name,buf);await ff.load();document.fonts.add(ff)}
 function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('emtool',2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('fonts'))r.result.createObjectStore('fonts',{keyPath:'name'});if(!r.result.objectStoreNames.contains('kv'))r.result.createObjectStore('kv')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function idbReq(mode,fn,store){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction(store||'fonts',mode),q=fn(t.objectStore(store||'fonts'));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)})}
-async function loadUserFonts(){
+async function keepStorage(){try{if(navigator.storage&&navigator.storage.persist&&!(await navigator.storage.persisted()))await navigator.storage.persist()}catch(e){}}
+async function loadUserFonts(){keepStorage();
   try{for(const f of fontStore){if(f.data){const b=await (await fetch(f.data)).arrayBuffer();await idbReq('readwrite',st=>st.put({name:f.name,buf:b}))}}}catch(e){}
   let recs=[];try{recs=(await idbReq('readonly',st=>st.getAll()))||[]}catch(e){}
   const legacy=fontStore.filter(f=>f.data&&!recs.some(r=>r.name===f.name));fontStore=[];
@@ -1795,7 +1839,7 @@ async function addFontFile(file){
   if(!/\.(ttf|otf|woff2?)$/i.test(file.name))return toast('Use a .ttf, .otf, .woff or .woff2 font file.');
   const name=file.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').trim();
   try{const buf=await file.arrayBuffer();await registerFont(name,buf.slice(0));
-    let kept=true;try{await idbReq('readwrite',st=>st.put({name,buf}))}catch(e){kept=false}
+    let kept=true;try{await idbReq('readwrite',st=>st.put({name,buf}))}catch(e){kept=false}keepStorage();
     fontStore=fontStore.filter(f=>f.name!==name);fontStore.unshift({name});
     await applyText({fontFamily:name});toast(kept?'Font "'+name+'" added and saved in this browser.':'Font "'+name+'" added for this session only (this view can’t store fonts).')}
   catch(e){toast('Could not read that font file.')}
@@ -2276,10 +2320,14 @@ function renderHome(){
   $('#layGrid').innerHTML=ls.length?ls.map(l=>{if(!l.thumb)l.thumb=thumbFor(l.base,blankSku(l.sampleName||'Product name',l.sampleImg));return`<div data-id="${l.id}" data-kind="l">`+card(l.thumb,l.name,'Updated '+fmtDate(l.updatedAt),
     '<button data-act="newc" class="pri">New campaign</button><button data-act="edit">Edit</button><button data-act="dup">Duplicate</button><button data-act="ren">Rename</button><button data-act="del">Delete</button>','edit')+'</div>'}).join(''):'<div class="empty" style="grid-column:1/-1">No layouts yet. Click <b>+ New layout</b>.</div>';
 }
+function missingFonts(){const miss=new Set(),chk=d=>{if(d&&d.fontFamily&&!resolveFont(d.fontFamily,d.fontStyle).found)miss.add(d.fontFamily)};
+  const walkAll=a=>(a||[]).forEach(d=>{chk(d);if(d.children)walkAll(d.children)});walkAll(base);
+  skus.forEach(s=>{walkAll(s.extras);Object.values(s.overrides||{}).forEach(chk)});return[...miss]}
 function openEditor(kind,id){
   const rec=kind==='campaign'?store.campaigns.find(x=>x.id===id):store.layouts.find(x=>x.id===id);if(!rec)return;
   pageCat=null;pageCache.clear();prodSel=new Set();prodAnchor=-1;openDoc={kind,id};cats=kind==='campaign'?(rec.categories=rec.categories||[]):[];catFilter='all';catWarned=false;base=rec.base;skus=kind==='campaign'?rec.skus:[blankSku(rec.sampleName||'Product name here',rec.sampleImg||'washer')];
   skus.forEach(s=>{s.values=s.values||{};s.overrides=s.overrides||{};s.extras=s.extras||[]});
+  setTimeout(()=>{const m=missingFonts();if(m.length){toast(`This design uses font${m.length>1?'s':''} not loaded in this browser: ${m.slice(0,4).join(', ')}${m.length>4?'…':''}. Upload ${m.length>1?'them':'it'} once from the text bar (Upload font) and ${m.length>1?'they stay':'it stays'} saved.`);setTimeout(()=>{const t=$('#toast');if(t)clearTimeout(toastT),toastT=setTimeout(()=>t.classList.remove('show'),9000)},0)}},900);
   if(!skus.length)skus.push(blankSku('SKU-1'));
   applyAll=kind==='layout';cur=0;sel=[];hist=[];fut=[];pixSel=null;cancelCrop(true);
   document.body.classList.remove('home');document.body.classList.toggle('lay',kind==='layout');
@@ -2493,7 +2541,7 @@ function wire(){
   $('#home').addEventListener('click',e=>{const b=e.target.closest('[data-act]');const w=e.target.closest('[data-id]');if(!b||!w)return;homeAction(w.dataset.kind,w.dataset.id,b.dataset.act)});
   $('#newCampBtn').onclick=()=>openNewCampaign();
   $('#psdLayBtn').onclick=()=>{$('#psdNewIn').value='';$('#psdNewIn').click()};
-  $('#psdNewIn').addEventListener('change',e=>{const f=e.target.files[0];if(f)openPsd(f,true)});
+  $('#psdNewIn').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;if(/\.pdf$/i.test(f.name)||f.type==='application/pdf')openPdf(f,true);else openPsd(f,true)});
   $('#newLayBtn').onclick=()=>ask('New layout','Starts as a blank 1200×1200 canvas with a product name and product photo that change per product.','New layout','Create',v=>{const l={id:'lay_'+uid(),name:v,base:starterLayout(),sampleName:'Product name here',sampleImg:'washer',updatedAt:now()};store.layouts.push(l);openEditor('layout',l.id);persistNow(false)});
   $('#askYes').onclick=askOk;$('#askNo').onclick=()=>{$('#askDlg').style.display='none'};$('#askIn').addEventListener('keydown',e=>{if(e.key==='Enter')askOk()});
   ['ncClose','ncCancel'].forEach(x=>$('#'+x).onclick=()=>{$('#ncDlg').style.display='none'});$('#ncGo').onclick=ncCreate;
